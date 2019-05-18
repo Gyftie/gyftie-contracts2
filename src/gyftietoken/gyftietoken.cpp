@@ -1,12 +1,14 @@
-#include <gyftietoken.hpp>
+#include <gyftietoken/gyftietoken.hpp>
 
 ACTION gyftietoken::chgthrottle (const uint32_t throttle)
 {
     require_any_signatory();
-    throttle_table t_t (get_self(), get_self().value);
-    Throttle t;
-    t.throttle = throttle;
-    t_t.set (t, get_self());
+    gyftieClass.chgthrottle (throttle);
+
+    // throttle_table t_t (get_self(), get_self().value);
+    // Throttle t;
+    // t.throttle = throttle;
+    // t_t.set (t, get_self());
 }
 
 // ACTION gyftietoken::sigupdate ()
@@ -28,10 +30,17 @@ ACTION gyftietoken::chgthrottle (const uint32_t throttle)
 
 // }
 
+
+ACTION gyftietoken::tstnpl (const name account) {
+   // ProfileClass pc;
+    auto p = pc.load (account);
+    print (" idhash: ", p.idhash);
+}
+
 ACTION gyftietoken::xferzj () 
 {
     require_auth ("gftma.x"_n);
-    xfer_account ("zombiejigsaw"_n, "gftma.x"_n);
+    // xfer_account ("zombiejigsaw"_n, "gftma.x"_n);
 }
 
 // ACTION gyftietoken::fixstake (const name account)
@@ -453,44 +462,38 @@ ACTION gyftietoken::setconfig (const name token_gen,
                                 const name gftorderbook,
                                 const name gyftie_foundation)
 {
-    require_auth (get_self());
+    gyftieClass.setconfig (gftorderbook, gyftie_foundation);
+
+    // require_auth (get_self());
         
-    config_table config (get_self(), get_self().value);
-    Config c;
-    c.token_gen = token_gen;
-    c.gftorderbook = gftorderbook;
-    c.gyftie_foundation = gyftie_foundation;
-    c.paused = PAUSED;
-    config.set (c, get_self());
+    // config_table config (get_self(), get_self().value);
+    // Config c;
+    // c.token_gen = token_gen;
+    // c.gftorderbook = gftorderbook;
+    // c.gyftie_foundation = gyftie_foundation;
+    // c.paused = PAUSED;
+    // config.set (c, get_self());
 
-    profile_table p_t (get_self(), get_self().value);
-    auto p_itr = p_t.find (gftorderbook.value);
-    if (p_itr == p_t.end()) {
-        insert_profile (gftorderbook, "GFT Order Book Account", "NO EXPIRATION");
-    }
+    // profile_table p_t (get_self(), get_self().value);
+    // auto p_itr = p_t.find (gftorderbook.value);
+    // if (p_itr == p_t.end()) {
+    //     insert_profile (gftorderbook, "GFT Order Book Account", "NO EXPIRATION");
+    // }
 
-    p_itr = p_t.find (gyftie_foundation.value);
-    if (p_itr == p_t.end()) {
-        insert_profile (gyftie_foundation, "Gyftie Limited Account", "NO EXPIRATION");
-    }
+    // p_itr = p_t.find (gyftie_foundation.value);
+    // if (p_itr == p_t.end()) {
+    //     insert_profile (gyftie_foundation, "Gyftie Limited Account", "NO EXPIRATION");
+    // }
 }
 
 ACTION gyftietoken::pause () 
 {
-    require_auth (get_self());
-    config_table config (get_self(), get_self().value);
-    Config c = config.get();
-    c.paused = PAUSED;
-    config.set (c, get_self());
+    gyftieClass.pause();
 }
 
 ACTION gyftietoken::unpause () 
 {
-    require_auth (get_self());
-    config_table config (get_self(), get_self().value);
-    Config c = config.get();
-    c.paused = UNPAUSED;
-    config.set (c, get_self());
+    gyftieClass.unpause ();
 }
 
 ACTION gyftietoken::setstate (const uint32_t account_count,
@@ -498,22 +501,25 @@ ACTION gyftietoken::setstate (const uint32_t account_count,
                                 const uint32_t pol_user_count_decayx100,  // 2%
                                 const uint32_t pol_step_increasex100)  // 1%
 {
-    require_auth (get_self());
+    gyftieClass.setstate (account_count, prior_step_user_count,
+            pol_user_count_decayx100, pol_step_increasex100);
+
+    // require_auth (get_self());
     
-    state_table state (get_self(), get_self().value);
-    State s;
-    s.user_count = account_count;
-    s.prior_step_user_count = prior_step_user_count;
-    s.pol_scaled_user_count_decay = pol_user_count_decayx100 * SCALER / 100;
-    s.pol_scaled_step_increase = pol_step_increasex100 * SCALER / 100;
-    state.set(s, get_self());
+    // state_table state (get_self(), get_self().value);
+    // State s;
+    // s.user_count = account_count;
+    // s.prior_step_user_count = prior_step_user_count;
+    // s.pol_scaled_user_count_decay = pol_user_count_decayx100 * SCALER / 100;
+    // s.pol_scaled_step_increase = pol_step_increasex100 * SCALER / 100;
+    // state.set(s, get_self());
 }
 
 ACTION gyftietoken::delconfig () 
 {
-    require_auth (get_self());
-    config_table config (get_self(), get_self().value);
-    config.remove();
+    // require_auth (get_self());
+    // config_table config (get_self(), get_self().value);
+    // config.remove();
 }
 
 ACTION gyftietoken::nchallenge (const name challenger_account, const name challenged_account, const string note)
@@ -1112,22 +1118,23 @@ ACTION gyftietoken::transfer(const name from, const name to, const asset quantit
     auto c = config.get();
 
     eosio::check(is_account(to), "to account does not exist");    
-    eosio::check(is_gyftie_account(to) || c.gftorderbook == to || c.gyftie_foundation == to, "Recipient is not a Gyftie account. Must Gyft first.");
+    eosio::check(pc.exists(to), "Recipient does not have a Gyftie profile.");
+    //eosio::check(is_gyftie_account(to) || c.gftorderbook == to || c.gyftie_foundation == to, "Recipient is not a Gyftie account. Must Gyft first.");
    
-    if (to != c.gftorderbook || to != c.gyftie_foundation || to != get_self()) {
-        availrating_table a_t (get_self(), to.value);
-        auto a_itr = a_t.find (from.value);
-        if (a_itr != a_t.end()) {
-            a_t.modify (a_itr, get_self(), [&](auto &a) {
-                a.rate_deadline = current_block_time().to_time_point().sec_since_epoch() + (60 * 60 * 24);
-            });
-        } else {
-            a_t.emplace (get_self(),  [&](auto &a) {
-                a.ratee = from;
-                a.rate_deadline = current_block_time().to_time_point().sec_since_epoch() + (60 * 60 * 24);
-            });
-        }
-    }
+    // if (to != c.gftorderbook || to != c.gyftie_foundation || to != get_self()) {
+    //     availrating_table a_t (get_self(), to.value);
+    //     auto a_itr = a_t.find (from.value);
+    //     if (a_itr != a_t.end()) {
+    //         a_t.modify (a_itr, get_self(), [&](auto &a) {
+    //             a.rate_deadline = current_block_time().to_time_point().sec_since_epoch() + (60 * 60 * 24);
+    //         });
+    //     } else {
+    //         a_t.emplace (get_self(),  [&](auto &a) {
+    //             a.ratee = from;
+    //             a.rate_deadline = current_block_time().to_time_point().sec_since_epoch() + (60 * 60 * 24);
+    //         });
+    //     }
+    // }
 
     auto sym = quantity.symbol.code().raw();
     stats statstable(_self, sym);
@@ -1249,7 +1256,7 @@ ACTION gyftietoken::requnstake (const name user, const asset quantity)
     });
 }
 
-EOSIO_DISPATCH(gyftietoken, (setconfig)(delconfig)(create)(issue)(transfer)(calcgyft)(unlockchain)(removetprofs)(unstaked2)(xferzj) 
+EOSIO_DISPATCH(gyftietoken, (setconfig)(delconfig)(create)(issue)(transfer)(calcgyft)(unlockchain)(removetprofs)(unstaked2)(xferzj)(tstnpl) 
                             (gyft)(propose)(votefor)(voteagainst)(pause)(unpause)(addrating)(requnstake)(stake)(unstaked)(remsig)(addsig)(setrank)(promoteprop)(promoteuser)(voteforuser)(unvoteprop)
                             (removeprop)(ungyft)(gyft2)(setstate)(dchallenge)(chgthrottle)(issuetostake)(xfertostake)(addlock)(unlock)
                             (nchallenge)(validate)(addcnote)(addlockchain)(addlocknote))

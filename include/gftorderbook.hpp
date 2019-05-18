@@ -115,7 +115,8 @@ CONTRACT gftorderbook : public contract
    ACTION reassign (name current, name newacct, asset quantity);
 
   private:
-
+    const string symbol_name = "EOS";
+    const symbol network_symbol = symbol(symbol_name, 4);
     const uint64_t  SCALER = 1000000;
     const string    GYFTIE_SYM_STR  = "GFT";
     const uint8_t   GYFTIE_PRECISION = 8;
@@ -141,6 +142,12 @@ CONTRACT gftorderbook : public contract
        asset        buy_orderbook_size_gft;
        uint32_t     last_bucket_build_time;
        uint32_t     last_payrewbucks_time;
+
+        // DEPLOY
+        asset       buy_orderbook_size_eos;
+        asset       sell_orderbook_size_eos;
+       uint32_t     buy_order_count;
+       uint32_t     sell_order_count;
    };
    typedef singleton<"states"_n, State> state_table;
    typedef eosio::multi_index<"states"_n, State> state_table_placeholder;
@@ -627,35 +634,43 @@ CONTRACT gftorderbook : public contract
         }
     }
 
-    void decrease_sellgft_liquidity (asset gft_sold)
+    void decrease_sellgft_liquidity (asset gft_sold, asset eos_spent, uint16_t sell_order_count_change)
     {
         state_table state (get_self(), get_self().value);
         State s = state.get();
         s.sell_orderbook_size_gft -= gft_sold;
+        s.sell_orderbook_size_eos -= eos_spent;
+        s.sell_order_count += sell_order_count_change;
         state.set (s, get_self());
     }
 
-    void decrease_buygft_liquidity (asset gft_bought)
+    void decrease_buygft_liquidity (asset gft_bought, asset eos_spent, uint16_t buy_order_count_change)
     {
         state_table state (get_self(), get_self().value);
         State s = state.get();
         s.buy_orderbook_size_gft -= gft_bought;
+        s.buy_orderbook_size_eos -= eos_spent;
+        s.buy_order_count += buy_order_count_change;
         state.set (s, get_self());
     }
 
-    void increase_sellgft_liquidity (asset new_gft_added)
+    void increase_sellgft_liquidity (asset new_gft_added, asset eos_added, uint16_t sell_order_count_change)
     {
         state_table state (get_self(), get_self().value);
         State s = state.get();
         s.sell_orderbook_size_gft += new_gft_added;
+        s.sell_orderbook_size_eos += eos_added;
+        s.sell_order_count += sell_order_count_change;
         state.set (s, get_self());
     }
 
-    void increase_buygft_liquidity (asset new_gft_added)
+    void increase_buygft_liquidity (asset new_gft_added, asset eos_added, uint16_t buy_order_count_change)
     {
         state_table state (get_self(), get_self().value);
         State s = state.get();
         s.buy_orderbook_size_gft += new_gft_added;
+        s.buy_orderbook_size_eos += eos_added;
+        s.buy_order_count += buy_order_count_change;
         state.set (s, get_self());
     }
 
@@ -665,7 +680,7 @@ CONTRACT gftorderbook : public contract
         eosio::check (gft_amount.amount > 0, "GFT amount must be greater than zero.");
 
         confirm_balance (buyer, get_eos_order_value(price_per_gft, gft_amount));
-        increase_buygft_liquidity (gft_amount);
+        increase_buygft_liquidity (gft_amount, get_eos_order_value(price_per_gft, gft_amount), 1);
 
         buyorder_table b_t (get_self(), get_self().value);
         b_t.emplace (get_self(), [&](auto &b) {
@@ -684,7 +699,7 @@ CONTRACT gftorderbook : public contract
         eosio::check (gft_amount.amount > 0, "GFT amount must be greater than zero.");
 
         confirm_balance (seller, gft_amount);
-        increase_sellgft_liquidity (gft_amount);
+        increase_sellgft_liquidity (gft_amount, get_eos_order_value (price_per_gft, gft_amount), 1);
 
         sellorder_table s_t (get_self(), get_self().value);
         s_t.emplace (get_self(), [&](auto &s) {
@@ -758,10 +773,10 @@ CONTRACT gftorderbook : public contract
                              get_gft_amount (s_itr->price_per_gft, eos_amount));
 
         if (eos_amount == s_itr->order_value) {
-            decrease_sellgft_liquidity (s_itr->gft_amount);
+            decrease_sellgft_liquidity (s_itr->gft_amount, s_itr->order_value, -1);
             s_t.erase (s_itr);
         } else if (s_itr->order_value > eos_amount) {
-            decrease_sellgft_liquidity (get_gft_amount (s_itr->price_per_gft, eos_amount));
+            decrease_sellgft_liquidity (get_gft_amount (s_itr->price_per_gft, eos_amount), eos_amount, 0);
             s_t.modify (s_itr, get_self(), [&](auto &s) {
                 s.gft_amount -= get_gft_amount (s_itr->price_per_gft, eos_amount);
                 s.order_value = get_eos_order_value (s_itr->price_per_gft, s.gft_amount);
@@ -787,10 +802,10 @@ CONTRACT gftorderbook : public contract
         settle_buyer_maker (b_itr->buyer, seller, b_itr->price_per_gft, gft_amount);
 
         if (gft_amount == b_itr->gft_amount) {
-            decrease_buygft_liquidity (b_itr->gft_amount);
+            decrease_buygft_liquidity (b_itr->gft_amount, b_itr->order_value, -1);
             b_t.erase (b_itr);
         } else if (b_itr->gft_amount > gft_amount) {
-            decrease_buygft_liquidity (gft_amount);
+            decrease_buygft_liquidity (gft_amount, get_eos_order_value (b_itr->price_per_gft, b_itr->gft_amount), 0);
             b_t.modify (b_itr, get_self(), [&](auto &b) {
                 b.gft_amount -= gft_amount;
                 b.order_value = get_eos_order_value (b_itr->price_per_gft, b.gft_amount);
@@ -845,25 +860,25 @@ CONTRACT gftorderbook : public contract
         }
 
         if (b_itr->gft_amount == s_itr->gft_amount) {
-            decrease_buygft_liquidity (b_itr->gft_amount);
-            decrease_sellgft_liquidity (s_itr->gft_amount);
+            decrease_buygft_liquidity (b_itr->gft_amount, b_itr->order_value, -1);
+            decrease_sellgft_liquidity (s_itr->gft_amount, s_itr->order_value, -1);
             s_t.erase (s_itr);
             b_t.erase (b_itr); 
         } else if (b_itr->gft_amount > s_itr->gft_amount) {
-            decrease_buygft_liquidity (s_itr->gft_amount);
+            decrease_buygft_liquidity (s_itr->gft_amount, get_eos_order_value (b_itr->price_per_gft, s_itr->gft_amount), 0);
             b_t.modify (b_itr, get_self(), [&](auto &b) {
                 b.gft_amount -= s_itr->gft_amount;
                 b.order_value = get_eos_order_value (b_itr->price_per_gft, b.gft_amount);
             });
-            decrease_sellgft_liquidity (s_itr->gft_amount);
+            decrease_sellgft_liquidity (s_itr->gft_amount, s_itr->order_value, -1);
             s_t.erase (s_itr);
         } else if (s_itr->gft_amount > b_itr->gft_amount) {
-            decrease_sellgft_liquidity (b_itr->gft_amount);
+            decrease_sellgft_liquidity (b_itr->gft_amount, get_eos_order_value (s_itr->price_per_gft, b_itr->gft_amount), 0);
             s_t.modify (s_itr, get_self(), [&](auto &s) {
                 s.gft_amount -= b_itr->gft_amount;
                 s.order_value = get_eos_order_value (s_itr->price_per_gft, s.gft_amount);
             });
-            decrease_buygft_liquidity (b_itr->gft_amount);
+            decrease_buygft_liquidity (b_itr->gft_amount, b_itr->order_value, -1);
             b_t.erase (b_itr);
         }
     }

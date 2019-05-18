@@ -1,3 +1,5 @@
+#pragma once
+
 #include <eosio/asset.hpp>
 #include <eosio/eosio.hpp>
 #include <eosio/crypto.hpp>
@@ -11,6 +13,10 @@
 #include <math.h>
 
 #include <abieos_numeric.hpp>
+
+#include "../common/models/profile.hpp"
+#include "../common/models/gyft.hpp"
+#include "../gyftie.hpp"
 
 using std::string;
 using std::vector;
@@ -107,6 +113,9 @@ CONTRACT gyftietoken : public contract
 
     ACTION unpause();
 
+    // ACTION tstnpc (const name account);
+    ACTION tstnpl (const name account);
+
   private:
     const string GYFTIE_SYM_STR = "GFT";
     const uint8_t GYFTIE_PRECISION = 8;
@@ -120,6 +129,9 @@ CONTRACT gyftietoken : public contract
     const uint8_t VALIDATED=2;
 
     const uint64_t  SCALER = 100000000;
+    ProfileClass pc = ProfileClass (get_self());
+    GyftClass gyftClass = GyftClass (get_self());
+    GyftieClass gyftieClass = GyftieClass (get_self());
 
     TABLE Config
     {
@@ -479,41 +491,35 @@ CONTRACT gyftietoken : public contract
 
     uint64_t get_next_sender_id()
     {
-        senderid_table sid (get_self(), get_self().value);
-        SenderID s = sid.get_or_create(get_self(), SenderID());
-        uint64_t return_senderid = s.last_sender_id;
-        return_senderid++;
-        s.last_sender_id = return_senderid;
-        sid.set (s, get_self());
-        return return_senderid;
+        return gyftieClass.get_next_sender_id();
     }
 
-    void xfer_account (const name old_account, const name new_account)
-    {
-        profile_table p_t (get_self(), get_self().value);
-        auto old_profile_itr = p_t.find (old_account.value);
-        eosio::check (old_profile_itr != p_t.end(), "Profile to remove cannot be found.");
-        eosio::check (old_profile_itr->staked_balance.amount <= 0, "Profile has staked GFT. Cannot transfer.");
+    // void xfer_account (const name old_account, const name new_account)
+    // {
+    //     profile_table p_t (get_self(), get_self().value);
+    //     auto old_profile_itr = p_t.find (old_account.value);
+    //     eosio::check (old_profile_itr != p_t.end(), "Profile to remove cannot be found.");
+    //     eosio::check (old_profile_itr->staked_balance.amount <= 0, "Profile has staked GFT. Cannot transfer.");
         
-        auto new_profile_itr = p_t.find (new_account.value);
-        eosio::check (new_profile_itr != p_t.end(), "Profile of new account cannot be found.");
+    //     auto new_profile_itr = p_t.find (new_account.value);
+    //     eosio::check (new_profile_itr != p_t.end(), "Profile of new account cannot be found.");
         
-        config_table config(get_self(), get_self().value);
-        auto c = config.get();
+    //     config_table config(get_self(), get_self().value);
+    //     auto c = config.get();
 
-        symbol sym = symbol{symbol_code(GYFTIE_SYM_STR.c_str()), GYFTIE_PRECISION};
-        balance_table b_t(c.gftorderbook, old_account.value);
-        auto b_itr = b_t.find(sym.code().raw());
-        if (b_itr != b_t.end() && b_itr->token_contract == get_self())
-        {
-            eosio::check (true, "Profile to remove has open orders or a committed balance. Delete orders and/or withdraw funds.");
-        }
+    //     symbol sym = symbol{symbol_code(GYFTIE_SYM_STR.c_str()), GYFTIE_PRECISION};
+    //     balance_table b_t(c.gftorderbook, old_account.value);
+    //     auto b_itr = b_t.find(sym.code().raw());
+    //     if (b_itr != b_t.end() && b_itr->token_contract == get_self())
+    //     {
+    //         eosio::check (true, "Profile to remove has open orders or a committed balance. Delete orders and/or withdraw funds.");
+    //     }
 
-        string s { "Transfer from account via Gyftie signatories"};
-        transfer (old_account, new_account, old_profile_itr->gft_balance, s);
+    //     string s { "Transfer from account via Gyftie signatories"};
+    //     transfer (old_account, new_account, old_profile_itr->gft_balance, s);
 
-        p_t.erase (old_profile_itr);
-    }
+    //     p_t.erase (old_profile_itr);
+    // }
 
     void require_any_signatory () 
     {
@@ -535,18 +541,15 @@ CONTRACT gyftietoken : public contract
 
     void throttle_gyfts () 
     {
-        throttle_table t_t (get_self(), get_self().value);
-        Throttle t = t_t.get_or_create(get_self(), Throttle());
-
-        state_table state (get_self(), get_self().value);
-        auto s = state.get();
+       
+        uint32_t throttle = gyftieClass.getstate().throttle;
         
-        if (t.throttle < s.user_count && t.throttle > 0) {
+        if (throttle < gyftieClass.getstate().account_count && throttle > 0) {
             gyft_table g_t (get_self(), get_self().value);
             auto gyftdate_index = g_t.get_index<"bygyftdate"_n>();
             auto gyftdate_itr = gyftdate_index.rbegin();
 
-            for (int i=0; i< t.throttle; i++) {
+            for (int i=0; i< throttle; i++) {
                 gyftdate_itr++;
             }
 
@@ -681,16 +684,18 @@ CONTRACT gyftietoken : public contract
     void addgyft(name gyfter, name gyftee, asset gyfter_issue,
                  asset gyftee_issue, string relationship)
     {
-        gyft_table g_t(get_self(), get_self().value);
-        g_t.emplace(get_self(), [&](auto &g) {
-            g.gyft_id = g_t.available_primary_key();
-            g.gyfter = gyfter;
-            g.gyftee = gyftee;
-            g.gyfter_issue = gyfter_issue;
-            g.gyftee_issue = gyftee_issue;
-            g.relationship = relationship;
-            g.gyft_date = current_block_time().to_time_point().sec_since_epoch();
-        });
+        gyftClass.create (pc.load(gyfter), gyftee, gyfter_issue, 
+                            gyftee_issue, relationship);
+        // gyft_table g_t(get_self(), get_self().value);
+        // g_t.emplace(get_self(), [&](auto &g) {
+        //     g.gyft_id = g_t.available_primary_key();
+        //     g.gyfter = gyfter;
+        //     g.gyftee = gyftee;
+        //     g.gyfter_issue = gyfter_issue;
+        //     g.gyftee_issue = gyftee_issue;
+        //     g.relationship = relationship;
+        //     g.gyft_date = current_block_time().to_time_point().sec_since_epoch();
+        // });
     }
 
     // void stake (name account, asset quantity) 
@@ -789,13 +794,15 @@ CONTRACT gyftietoken : public contract
 
     bool is_paused()
     {
-        config_table config(get_self(), get_self().value);
-        auto c = config.get();
-        if (c.paused == PAUSED)
-        {
-            return true;
-        }
-        return false;
+        return gyftieClass.getstate().paused == PAUSED;
+
+        // config_table config(get_self(), get_self().value);
+        // auto c = config.get();
+        // if (c.paused == PAUSED)
+        // {
+        //     return true;
+        // }
+        // return false;
     }
 
     bool is_gyftie_account(name account)
@@ -824,29 +831,17 @@ CONTRACT gyftietoken : public contract
                         const string idhash,
                         const string id_expiration)
     {
-        profile_table p_t(get_self(), get_self().value);
-        auto p_itr = p_t.find(account.value);
-        eosio::check(p_itr == p_t.end(), "Account already has a profile.");
-
-        p_t.emplace(get_self(), [&](auto &p) {
-            p.account = account;
-            p.rating_count = 0;
-            p.rating_sum = 0;
-            p.idhash = idhash;
-            p.id_expiration = id_expiration;
-            p.gft_balance = asset {0, symbol{symbol_code(GYFTIE_SYM_STR.c_str()), GYFTIE_PRECISION}};
-            // DEPLOY
-            p.unstaking_balance = asset {0, symbol{symbol_code(GYFTIE_SYM_STR.c_str()), GYFTIE_PRECISION}};
-            p.staked_balance = asset {0, symbol{symbol_code(GYFTIE_SYM_STR.c_str()), GYFTIE_PRECISION}};
-        });
+        pc.create (account, idhash, id_expiration);
     }
 
     void increment_account_count()
     {
-        state_table state (get_self(), get_self().value);
-        auto s = state.get();
-        s.user_count++;
-        state.set (s, get_self());
+        gyftieClass.increment_account_count();
+
+        // state_table state (get_self(), get_self().value);
+        // auto s = state.get();
+        // s.user_count++;
+        // state.set (s, get_self());
     }
 
     void burn(name account, asset quantity)
@@ -879,10 +874,10 @@ CONTRACT gyftietoken : public contract
             gft_balance += p_itr->staked_balance;
         }
 
-        config_table config(get_self(), get_self().value);
-        auto c = config.get();
+        // config_table config(get_self(), get_self().value);
+        // auto c = config.get();
 
-        balance_table b_t(c.gftorderbook, account.value);
+        balance_table b_t(gyftieClass.getstate().gftorderbook, account.value);
         auto b_itr = b_t.find(sym.code().raw());
         if (b_itr != b_t.end() && b_itr->token_contract == get_self())
         {
@@ -933,18 +928,18 @@ CONTRACT gyftietoken : public contract
 
         string market_sell_for_reimbursement { "Market Sell for Account Creation Reimbursement"};
 
-        config_table config(get_self(), get_self().value);
-        auto c = config.get();
+        // config_table config(get_self(), get_self().value);
+        // auto c = config.get();
 
         action (
             permission_level{get_self(), "owner"_n},
             get_self(), "issue"_n,
-            std::make_tuple(c.gftorderbook, reimbursement, market_sell_for_reimbursement))
+            std::make_tuple(gyftieClass.getstate().gftorderbook, reimbursement, market_sell_for_reimbursement))
         .send();
 
         action (
             permission_level{get_self(), "owner"_n},
-            c.gftorderbook, "marketsell"_n,
+            gyftieClass.getstate().gftorderbook, "marketsell"_n,
             std::make_tuple(get_self(), reimbursement))
         .send();   
 
@@ -968,8 +963,9 @@ CONTRACT gyftietoken : public contract
     {
         config_table config(get_self(), get_self().value);
         auto c = config.get();
+        name gftorderbook = gyftieClass.getstate().gftorderbook;
 
-        buyorder_table b_t(c.gftorderbook, c.gftorderbook.value);
+        buyorder_table b_t(gftorderbook, gftorderbook.value);
         auto b_index = b_t.get_index<"byprice"_n>();
         auto b_itr = b_index.rbegin();
 
@@ -1008,19 +1004,20 @@ CONTRACT gyftietoken : public contract
 
     float get_usercount_factor ()
     {
-        state_table state = state_table (get_self(), get_self().value);
-        auto s = state.get();
+        return gyftieClass.get_usercount_factor();
+        // state_table state = state_table (get_self(), get_self().value);
+        // auto s = gyftieClass.getstate();
         
-        float increase_since_last_step = (float) (s.user_count - s.prior_step_user_count) / (float) s.prior_step_user_count;
+        // float increase_since_last_step = (float) (s.account_count - s.prior_step_user_count) / (float) s.prior_step_user_count;
 
-        if (increase_since_last_step >= (float) s.pol_scaled_step_increase / SCALER) {
-            float decay_percentage = (float) 1.00000000  - ( (float) s.pol_scaled_user_count_decay / (float) SCALER);
-            s.scaled_user_count_factor *= (float) (decay_percentage);
-            s.prior_step_user_count = s.user_count;
-            state.set (s, get_self());
-        }
+        // if (increase_since_last_step >= (float) s.pol_scaled_step_increase / SCALER) {
+        //     float decay_percentage = (float) 1.00000000  - ( (float) s.pol_scaled_user_count_decay / (float) SCALER);
+        //     s.scaled_user_count_factor *= (float) (decay_percentage);
+        //     s.prior_step_user_count = s.account_count;
+        //     state.set (s, get_self());
+        // }
 
-        return (float) s.scaled_user_count_factor / (float) SCALER;
+        // return (float) s.scaled_user_count_factor / (float) SCALER;
     }
 
     asset get_one_gft()

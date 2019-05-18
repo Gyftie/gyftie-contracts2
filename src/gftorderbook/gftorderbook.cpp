@@ -75,6 +75,8 @@ ACTION gftorderbook::setstate (asset last_price)
     s.last_price = last_price;
     s.sell_orderbook_size_gft = asset {0, symbol{symbol_code(GYFTIE_SYM_STR.c_str()), GYFTIE_PRECISION}};
     s.buy_orderbook_size_gft = asset {0, symbol{symbol_code(GYFTIE_SYM_STR.c_str()), GYFTIE_PRECISION}};
+    s.sell_orderbook_size_eos = asset {0, network_symbol};
+    s.buy_orderbook_size_eos = asset {0, network_symbol};
     state.set (s, get_self());
 }
 
@@ -244,7 +246,7 @@ ACTION gftorderbook::addliqreward (asset liqreward)
     l.availreward += liqreward;
     l_t.set (l, get_self());
 
-    buildbuckets_deferred();
+    //buildbuckets_deferred();
 }
 
 ACTION gftorderbook::payliqinfrew ()
@@ -733,7 +735,7 @@ ACTION gftorderbook::delbuyorder (uint64_t buyorder_id)
 
     sendfrombal (c.valid_counter_token_contract, b_itr->buyer, b_itr->buyer, b_itr->order_value, "Cancelled Buy Order");
 
-    decrease_buygft_liquidity (b_itr->gft_amount);
+    decrease_buygft_liquidity (b_itr->gft_amount, b_itr->order_value, -1);
     b_t.erase (b_itr);
     //buildbuckets_deferred();
 }
@@ -752,7 +754,7 @@ ACTION gftorderbook::delsellorder (uint64_t sellorder_id)
 
     sendfrombal (c.gyftiecontract, s_itr->seller, s_itr->seller, s_itr->gft_amount, "Cancelled Sell Order");
 
-    decrease_sellgft_liquidity (s_itr->gft_amount);
+    decrease_sellgft_liquidity (s_itr->gft_amount, s_itr->order_value, -1);
     s_t.erase (s_itr);
     //buildbuckets_deferred();
 }
