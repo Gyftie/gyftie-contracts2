@@ -1,8 +1,9 @@
 #pragma once
 #include <string>
 
-#include "../common.hpp"
+#include "common.hpp"
 #include "profile.hpp"
+#include "gyftie.hpp"
 
 using std::vector;
 using std::string;
@@ -11,7 +12,7 @@ using namespace common;
 
 class GyftClass {
 
-    private: 
+    public:
 
         TABLE gyftevent
         {
@@ -42,10 +43,9 @@ class GyftClass {
 
         name _contract;
         gyft_table gyft_t;
+        GyftieClass _gyftieClass;
 
-    public: 
-
-        GyftClass (const name& contract) : gyft_t (contract, contract.value) {
+        GyftClass (const name& contract) : gyft_t (contract, contract.value), _gyftieClass (contract) {
             _contract = contract;
         }
 
@@ -59,13 +59,33 @@ class GyftClass {
                         const asset& gyftee_issue, const string& relationship) {
                       
             return gyft_t.emplace(_contract, [&](auto &g) {
-                g.gyft_id = gyft_t.available_primary_key();
-                g.gyfter = gyfter.account;
-                g.gyftee = gyftee;
-                g.gyfter_issue = gyfter_issue;
-                g.gyftee_issue = gyftee_issue;
-                g.relationship = relationship;
-                g.gyft_date = current_block_time().to_time_point().sec_since_epoch();
+                g.gyft_id       = gyft_t.available_primary_key();
+                g.gyfter        = gyfter.account;
+                g.gyftee        = gyftee;
+                g.gyfter_issue  = gyfter_issue;
+                g.gyftee_issue  = gyftee_issue;
+                g.relationship  = relationship;
+                g.gyft_date     = current_block_time().to_time_point().sec_since_epoch();
             });
+        }
+
+        auto throttle_check () {
+            uint32_t throttle = _gyftieClass.getstate().throttle;
+            
+            if (throttle < _gyftieClass.getstate().account_count && throttle > 0) {
+                auto gyftdate_index = gyft_t.get_index<"bygyftdate"_n>();
+                auto gyftdate_itr = gyftdate_index.rbegin();
+
+                for (int i=0; i< throttle; i++) {
+                    gyftdate_itr++;
+                }
+
+                uint32_t throttled_gyfts_ago = gyftdate_itr->gyft_date;
+                uint32_t throttled_time_period = 60 * 60 * 24; // 24 hours
+                eosio::check (  throttled_gyfts_ago < 
+                                    current_block_time().to_time_point().sec_since_epoch() - 
+                                    throttled_time_period, 
+                                "Gyfts are throttled. Please wait a few hours and try again.");
+            }
         }
 };

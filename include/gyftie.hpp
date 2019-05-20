@@ -1,15 +1,14 @@
 #pragma once
 #include <string>
 
-#include "common/common.hpp"
-#include "common/models/profile.hpp"
+#include "common.hpp"
+#include "profile.hpp"
 
 using std::vector;
 using std::string;
 
 using namespace common;
 using namespace eosio;
-
 
 class GyftieClass {
 
@@ -117,10 +116,10 @@ class GyftieClass {
          AppState state = appstate_t.get_or_create (_contract, AppState());
          state.account_count++;
          appstate_t.set (state, _contract);
+         return state.account_count;
       }
 
       float get_usercount_factor () {
-         // state_table state = state_table (get_self(), get_self().value);
         AppState state = appstate_t.get_or_create (_contract, AppState());
         
         float increase_since_last_step = (float) (state.account_count - state.prior_step_user_count) / (float) state.prior_step_user_count;
