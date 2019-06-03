@@ -1,9 +1,9 @@
-#pragma once
+#ifndef REPUTATION_H
+#define REPUTATION_H
+
 #include <string>
 
-#include "common.hpp"
 #include "profile.hpp"
-#include "gyftie.hpp"
 
 using std::vector;
 using std::string;
@@ -14,78 +14,19 @@ class ReputationClass {
 
     public:
 
-        name _contract;
-        ProfileClass _profileClass;
+        name            contract;
+        ProfileClass    profileClass;
 
-        ReputationClass (const name& contract) : _profileClass (contract) {
-            _contract = contract;
-            // _profileClass = ProfileClass (_contract);
-        }
+        ReputationClass (const name& contract);
 
-        uint64_t get_rank_profile_count (const uint64_t rank)
-        {
-           // profile_table p_t (get_self(), get_self().value);
-            auto rank_index = _profileClass.profile_t.get_index<"byrank"_n>();
-            auto rank_itr = rank_index.lower_bound(rank);
-            eosio::check (rank_itr != rank_index.end(), "Profiles with rank not found.");
+        uint64_t get_rank_profile_count (const uint64_t& rank);
+        uint64_t get_votes_from_rank (const name& contract, const uint64_t& rank);     
+        uint64_t get_next_strongest_rank (const uint64_t& rank);  
+        std::set<int> get_voting_ranks (const name& account);
 
-            uint64_t voter_count = 0;
-            while (rank_itr != rank_index.end() && rank_itr->rank == rank) {
-                voter_count++;
-                rank_itr++;
-            }
+};
 
-            return voter_count;
-        }
-
-        uint64_t get_votes_from_rank (const name account, const uint64_t rank)
-        {
-            //profile_table profile_t (get_self(), get_self().value);
-            auto p_itr = _profileClass.profile_t.find (account.value);
-            eosio::check (p_itr != _profileClass.profile_t.end(), "Profile to promote is not found.");
-
-            uint64_t vote_count =0;
-            vector<name> votes = p_itr->promotion_votes;
-            for (auto voter : votes) {
-                if (_profileClass.profile_t.get(voter.value).rank == rank) {
-                    vote_count++;
-                }
-            }
-
-            return vote_count;
-        }
-
-        uint64_t get_next_strongest_rank (const uint64_t rank) 
-        {
-            // profile_table p_t (get_self(), get_self().value);
-            auto rank_index = _profileClass.profile_t.get_index<"byrank"_n>();
-            if (rank == 0) {
-                return rank_index.rbegin()->rank;
-            }
-            
-            auto rank_itr = rank_index.lower_bound(rank);
-            rank_itr--;
-            eosio::check (rank_itr != rank_index.end(), "Profile with stronger rank not found.");
-
-            return rank_itr->rank;
-        }
-
-
-        std::set<int> get_voting_ranks (const name account)
-        {
-            // profile_table profile_t (get_self(), get_self().value);
-            auto p_itr = _profileClass.profile_t.find (account.value);
-            eosio::check (p_itr != _profileClass.profile_t.end(), "Profile to promote is not found.");
-
-            vector<name> votes = p_itr->promotion_votes;
-            std::set<int> rank_set;
-            for (auto voter : votes) {
-                rank_set.insert (_profileClass.profile_t.get(voter.value).rank);
-            }
-            return rank_set;
-        }
-
-
+#endif
 
         // ACTION gyftietoken::promoteuser (const name account)
         // {
@@ -192,4 +133,3 @@ class ReputationClass {
 // }
 
 
-};

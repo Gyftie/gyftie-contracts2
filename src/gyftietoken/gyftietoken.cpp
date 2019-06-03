@@ -8,7 +8,7 @@ ACTION gyftietoken::unvoteprop(const name voter, const uint64_t proposal_id){}
 ACTION gyftietoken::chgthrottle (const uint32_t throttle)
 {
     Permit::permit (get_self(), name{0}, name{0}, Permit::ANY_SIGNATORY);
-    gyftieClass.chgthrottle (throttle);
+    gyftieClass.change_throttle (throttle);
 }
 
 ACTION gyftietoken::xferzj () 
@@ -46,7 +46,7 @@ ACTION gyftietoken::removetprofs (const name account)
 ACTION gyftietoken::addlocknote (const name account_to_lock, const string note)
 {
     Permit::permit (get_self(), account_to_lock, name{0}, Permit::LOCK_ACTIVITY);
-    lockClass.addlocknote (account_to_lock, note);
+    lockClass.add_lock_note (account_to_lock, note);
 }
 
 ACTION gyftietoken::addlockchain (const name account_to_lock, const string note)
@@ -130,7 +130,7 @@ ACTION gyftietoken::setconfig (const name token_gen,
                                 const name gftorderbook,
                                 const name gyftie_foundation)
 {
-    gyftieClass.setconfig (gftorderbook, gyftie_foundation);
+    gyftieClass.set_config (gftorderbook, gyftie_foundation);
 }
 
 ACTION gyftietoken::pause () 
@@ -148,7 +148,7 @@ ACTION gyftietoken::setstate (const uint32_t account_count,
                                 const uint32_t pol_user_count_decayx100,  // 2%
                                 const uint32_t pol_step_increasex100)  // 1%
 {
-    gyftieClass.setstate (account_count, prior_step_user_count,
+    gyftieClass.set_state (account_count, prior_step_user_count,
             pol_user_count_decayx100, pol_step_increasex100);
 }
 
@@ -278,14 +278,6 @@ ACTION gyftietoken::voteagainst (const name voter,
     proposalClass.vote_against (voter, proposal_id);
 }
 
-ACTION gyftietoken::gyft (const name from, 
-                            const name to, 
-                            const string idhash,
-                            const string relationship)
-{
-    gyft2 (from, to, idhash, relationship, string {"No expiration date provided."});
-}
-
 ACTION gyftietoken::gyft2 (const name from, 
                             const name to, 
                             const string idhash,
@@ -336,18 +328,18 @@ ACTION gyftietoken::gyft2 (const name from,
     action (
         permission_level{get_self(), "owner"_n},
         get_self(), "issue"_n,
-        std::make_tuple(gyftieClass.getstate().gyftiegyftie, amount_to_gyftiegyftie, to_gyftiegyftie))
+        std::make_tuple(gyftieClass.get_state().gyftiegyftie, amount_to_gyftiegyftie, to_gyftiegyftie))
     .send();
 
     action (
         permission_level{get_self(), "owner"_n},
         get_self(), "issue"_n,
-        std::make_tuple(gyftieClass.getstate().gftorderbook, liquidity_reward, auto_liquidity_memo))
+        std::make_tuple(gyftieClass.get_state().gftorderbook, liquidity_reward, auto_liquidity_memo))
     .send();
 
     action (
         permission_level{get_self(), "owner"_n},
-        gyftieClass.getstate().gftorderbook, "addliqreward"_n,
+        gyftieClass.get_state().gftorderbook, "addliqreward"_n,
         std::make_tuple(liquidity_reward))
     .send();
 
@@ -480,13 +472,6 @@ ACTION gyftietoken::issuetostake (const name to, const asset quantity, const str
     out.send(get_next_sender_id(), get_self());    
 }
 
-ACTION gyftietoken::unstaked (const name user, const asset quantity) 
-{
-    // DEPLOY
-    // require_auth (get_self());
-    // unstake (user, quantity);
-}
-
 ACTION gyftietoken::unstaked2 (const name user, const asset quantity) 
 {
     // DEPLOY
@@ -550,8 +535,8 @@ ACTION gyftietoken::requnstake (const name user, const asset quantity)
     });
 }
 
-EOSIO_DISPATCH(gyftietoken, (setconfig)(create)(issue)(transfer)(unlockchain)(removetprofs)(unstaked2)(xferzj)
-                            (gyft)(propose)(votefor)(voteagainst)(pause)(unpause)(addrating)(requnstake)(stake)
-                            (unstaked)(remsig)(addsig)(setrank)(promoteprop)(promoteuser)(voteforuser)
-                            (removeprop)(gyft2)(setstate)(dchallenge)(chgthrottle)(issuetostake)(xfertostake)(addlock)(unlock)
-                            (nchallenge)(validate)(addcnote)(addlockchain)(addlocknote))
+// EOSIO_DISPATCH(gyftietoken, (setconfig)(create)(issue)(transfer)(unlockchain)(removetprofs)(unstaked2)(xferzj)
+//                             (gyft)(propose)(votefor)(voteagainst)(pause)(unpause)(addrating)(requnstake)(stake)
+//                             (unstaked)(remsig)(addsig)(setrank)(promoteprop)(promoteuser)(voteforuser)
+//                             (removeprop)(gyft2)(setstate)(dchallenge)(chgthrottle)(issuetostake)(xfertostake)(addlock)(unlock)
+//                             (nchallenge)(validate)(addcnote)(addlockchain)(addlocknote))

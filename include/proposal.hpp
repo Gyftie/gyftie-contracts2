@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PROPOSAL_H
+#define PROPOSAL_H
 
 #include <eosio/eosio.hpp>
 
@@ -12,7 +13,7 @@ class ProposalClass {
 
     public:
         
-        TABLE proposal
+        TABLE Proposal
         {
             uint64_t        proposal_id;
             uint32_t        created_date;
@@ -25,90 +26,23 @@ class ProposalClass {
             uint32_t        expiration_date;
 
             // DEPLOY
-            uint64_t        rank=0;
+            uint64_t        rank = 0;
             uint64_t        primary_key() const { return proposal_id; }
         };
 
-        typedef eosio::multi_index<"proposals"_n, proposal> proposal_table;
+        typedef eosio::multi_index<"proposals"_n, Proposal> proposal_table;
 
-        name _contract;
-        proposal_table proposal_t;
-        ProfileClass _profileClass;
+        name            contract;
+        proposal_table  proposal_t;
+        ProfileClass    profileClass;
 
-        ProposalClass (const name& contract) : proposal_t (contract, contract.value), _profileClass (contract) {
-            _contract = contract;
-        }
-
-        auto create (const name& proposer, const string& notes) {
-            require_auth (proposer);
-
-            Permit::permit (_contract, proposer, name{0}, Permit::PROPOSE);
-
-            return proposal_t.emplace (proposer, [&](auto &p) {
-                p.proposal_id       = proposal_t.available_primary_key();
-                p.created_date      = current_block_time().to_time_point().sec_since_epoch();
-                p.proposer          = proposer;
-                p.notes             = notes;
-                p.votes_for         = 1;
-                p.voters_for.push_back(proposer);
-                p.votes_against     = 0;
-
-                // DEPLOY 
-                p.rank              = _profileClass.profile_t.get(proposer.value).rank;
-                p.expiration_date   = current_block_time().to_time_point().sec_since_epoch() + (60 * 60 * 24 * 30);  // 30 days
-            });
-        }
-
-        auto load (const uint64_t& proposal_id) {
-            auto p_itr = proposal_t.find (proposal_id);
-            eosio::check (p_itr != proposal_t.end(), "Proposal is not found.");
-            return *p_itr;
-        }
-
-        auto remove (const uint64_t& proposal_id) {
-
-            auto p_itr = proposal_t.find (proposal_id);
-            eosio::check (p_itr != proposal_t.end(), "Proposal ID is not found.");
-
-            Permit::permit (_contract, p_itr->proposer, name{0}, Permit::REMOVE_PROPOSAL);
-
-            return proposal_t.erase (p_itr);
-        }
-
-        void check_vote (const proposal p, const name& voter) {
-            auto voter_for_itr = std::find (p.voters_for.begin(), p.voters_for.end(), voter);
-            eosio::check (voter_for_itr == p.voters_for.end(), "User has already voted (for).");
-
-            auto voter_against_itr = std::find (p.voters_against.begin(), p.voters_against.end(), voter);
-            eosio::check (voter_against_itr == p.voters_against.end(), "User has already voted (against).");
-
-            eosio::check (current_block_time().to_time_point().sec_since_epoch() <= p.expiration_date, "Proposal has expired.");
-        }
-
-        auto vote_for (const name& voter, const uint64_t& proposal_id) {
-            Permit::permit (_contract, voter, name{0}, Permit::AUTH_ACTIVITY);
-            
-            auto prop = load (proposal_id);
-            check_vote (prop, voter);
-
-            return proposal_t.modify (prop, _contract, [&](auto &p) {
-                p.votes_for++;
-                p.voters_for.push_back (voter);
-            });
-        }
-
-        auto vote_against (const name& voter, const uint64_t& proposal_id) {
-            Permit::permit (_contract, voter, name{0}, Permit::AUTH_ACTIVITY);
-
-            auto prop = load (proposal_id);
-            check_vote (prop, voter);
-            
-            return proposal_t.modify (prop, _contract, [&](auto &p) {
-                p.votes_for++;
-                p.voters_for.push_back (voter);
-            });
-        }
-
+        ProposalClass (const name& contract);
+        iterator<std::bidirectional_iterator_tag, const Proposal> create (const name& proposer, const string& notes);
+        auto load (const uint64_t& proposal_id);
+        iterator<std::bidirectional_iterator_tag, const Proposal> remove (const uint64_t& proposal_id);
+        void check_vote (const Proposal p, const name& voter);
+        Proposal vote_for (const name& voter, const uint64_t& proposal_id);
+        Proposal vote_against (const name& voter, const uint64_t& proposal_id);
         
 
         // ACTION gyftietoken::unvoteprop(const name voter, const uint64_t proposal_id) 
@@ -219,3 +153,5 @@ class ProposalClass {
 
 
 };
+
+#endif

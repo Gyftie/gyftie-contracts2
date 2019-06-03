@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 3.13)
 project(gyftie)
 
 set(EOSIO_WASM_OLD_BEHAVIOR "Off")

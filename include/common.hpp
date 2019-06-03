@@ -1,4 +1,5 @@
-#pragma once
+#ifndef COMMON_H
+#define COMMON_H
 
 #include <eosio/asset.hpp>
 #include <eosio/eosio.hpp>
@@ -28,3 +29,5 @@ namespace common {
     static const uint8_t        VALIDATED       = 2;
 
 }
+
+#endif

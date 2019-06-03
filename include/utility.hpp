@@ -1,11 +1,7 @@
-#pragma once
+#ifndef UTILITY_H
+#define UTILITY_H
 
-#include "profile.hpp"
-#include "gyftie.hpp"
-#include "gyft.hpp"
-#include "common.hpp"
 
-using namespace eosio;
 
 class UtilityClass {
 
@@ -353,3 +349,5 @@ class UtilityClass {
         // }
 
 }
+
+#endif

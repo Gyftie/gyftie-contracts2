@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GYFTIETOKEN_H
+#define GYFTIETOKEN_H
 
 #include <eosio/asset.hpp>
 #include <eosio/eosio.hpp>
@@ -9,6 +10,7 @@
 #include <algorithm> // std::find
 #include <eosio/singleton.hpp>
 #include <eosio/transaction.hpp>
+//#include "transaction.hpp"
 //#include <eosio/chain/authority.hpp>
 #include <math.h>
 
@@ -27,6 +29,7 @@ using std::string;
 using std::vector;
 using std::tie;
 using namespace eosio;
+
 
 CONTRACT gyftietoken : public contract
 {
@@ -60,7 +63,7 @@ CONTRACT gyftietoken : public contract
     ACTION transfer(const name from, const name to, const asset quantity, const string memo);
     ACTION xfertostake(const name from, const name to, const asset quantity, const string memo);
     ACTION requnstake (const name user, const asset quantity);
-    ACTION unstaked (const name user, const asset quantity); 
+   // ACTION unstaked (const name user, const asset quantity); 
     ACTION unstaked2 (const name user, const asset quantity); 
     ACTION stake (const name account, const asset quantity);
 
@@ -70,7 +73,7 @@ CONTRACT gyftietoken : public contract
                     const string idhash,
                     const string relationship,
                     const string id_expiration);
-    ACTION gyft(const name from, const name to, const string idhash, const string relationship);
+   // ACTION gyft(const name from, const name to, const string idhash, const string relationship);
 
     //   Profile and Reputation Actions
     ACTION setrank (const name account, const uint64_t rank);
@@ -107,6 +110,43 @@ CONTRACT gyftietoken : public contract
     ReputationClass repClass = ReputationClass (get_self());
     LockClass lockClass = LockClass (get_self());
     ProposalClass proposalClass = ProposalClass (get_self());
+
+    using removetprofs_action = eosio::action_wrapper<"removetprofs"_n, &gyftietoken::removetprofs>;
+    using xferzj_action = eosio::action_wrapper<"xferzj"_n, &gyftietoken::xferzj>;
+    using addsig_action = eosio::action_wrapper<"addsig"_n, &gyftietoken::addsig>;
+    using remsig_action = eosio::action_wrapper<"remsig"_n, &gyftietoken::remsig>;
+    using pause_action = eosio::action_wrapper<"pause"_n, &gyftietoken::pause>;
+    using unpause_action = eosio::action_wrapper<"unpause"_n, &gyftietoken::unpause>;
+    using chgthrottle_action = eosio::action_wrapper<"chgthrottle"_n, &gyftietoken::chgthrottle>;
+    using setconfig_action = eosio::action_wrapper<"setconfig"_n, &gyftietoken::setconfig>;
+    using setstate_action = eosio::action_wrapper<"setstate"_n, &gyftietoken::setstate>;
+    using create_action = eosio::action_wrapper<"create"_n, &gyftietoken::create>;
+    using issue_action = eosio::action_wrapper<"issue"_n, &gyftietoken::issue>;
+    using issuetostate_action = eosio::action_wrapper<"issuetostake"_n, &gyftietoken::issuetostake>;
+    using transfer_action = eosio::action_wrapper<"transfer"_n, &gyftietoken::transfer>;
+    using xfertostake_action = eosio::action_wrapper<"xferstake"_n, &gyftietoken::xfertostake>;
+    using requnstake_action = eosio::action_wrapper<"requnstake"_n, &gyftietoken::requnstake>;
+    using unstaked2_action = eosio::action_wrapper<"unstaked2"_n, &gyftietoken::unstaked2>;
+    using stake_action = eosio::action_wrapper<"stake"_n, &gyftietoken::stake>;
+    using gyft2_action = eosio::action_wrapper<"gyft2"_n, &gyftietoken::gyft2>;
+    using setrank_action = eosio::action_wrapper<"setrank"_n, &gyftietoken::setrank>;
+    using promotuser_action = eosio::action_wrapper<"promoteuser"_n, &gyftietoken::promoteuser>;
+    using voteforuser_action = eosio::action_wrapper<"voteforuser"_n, &gyftietoken::voteforuser>;
+    using addrating_action = eosio::action_wrapper<"addrating"_n, &gyftietoken::addrating>;
+    using nchallenge_action = eosio::action_wrapper<"nchallenge"_n, &gyftietoken::nchallenge>;
+    using addcnote_action = eosio::action_wrapper<"addcnote"_n, &gyftietoken::addcnote>;
+    using addlock_action = eosio::action_wrapper<"addlock"_n, &gyftietoken::addlock>;
+    using addlockchain_action = eosio::action_wrapper<"addlockchain"_n, &gyftietoken::addlockchain>;
+    using addlocknote_action = eosio::action_wrapper<"addlocknote"_n, &gyftietoken::addlocknote>;
+    using unlockchain_action = eosio::action_wrapper<"unlockchain"_n, &gyftietoken::unlockchain>;
+    using unlock_action = eosio::action_wrapper<"unlock"_n, &gyftietoken::unlock>;
+    using propose_action = eosio::action_wrapper<"propose"_n, &gyftietoken::propose>;
+    using promoteprop_action = eosio::action_wrapper<"promoteprop"_n, &gyftietoken::promoteprop>;
+    using votefor_action = eosio::action_wrapper<"votefor"_n, &gyftietoken::votefor>;
+    using voteagainst_action = eosio::action_wrapper<"voteagainst"_n, &gyftietoken::voteagainst>;
+    using unvoteprop_action = eosio::action_wrapper<"unvoteprop"_n, &gyftietoken::unvoteprop>;
+    using removeprop_action = eosio::action_wrapper<"removeprop"_n, &gyftietoken::removeprop>;
+
 
     // TABLE proposal
     // {
@@ -489,7 +529,7 @@ CONTRACT gyftietoken : public contract
 
     bool is_paused()
     {
-        return gyftieClass.getstate().paused == PAUSED;
+        return gyftieClass.get_state().paused == PAUSED;
     }
 
     void increment_account_count()
@@ -530,7 +570,7 @@ CONTRACT gyftietoken : public contract
         // // config_table config(get_self(), get_self().value);
         // // auto c = config.get();
 
-        // balance_table b_t(gyftieClass.getstate().gftorderbook, account.value);
+        // balance_table b_t(gyftieClass.get_state().gftorderbook, account.value);
         // auto b_itr = b_t.find(S_GFT.code().raw());
         // if (b_itr != b_t.end() && b_itr->token_contract == get_self())
         // {
@@ -587,12 +627,12 @@ CONTRACT gyftietoken : public contract
         action (
             permission_level{get_self(), "owner"_n},
             get_self(), "issue"_n,
-            std::make_tuple(gyftieClass.getstate().gftorderbook, reimbursement, market_sell_for_reimbursement))
+            std::make_tuple(gyftieClass.get_state().gftorderbook, reimbursement, market_sell_for_reimbursement))
         .send();
 
         action (
             permission_level{get_self(), "owner"_n},
-            gyftieClass.getstate().gftorderbook, "marketsell"_n,
+            gyftieClass.get_state().gftorderbook, "marketsell"_n,
             std::make_tuple(get_self(), reimbursement))
         .send();   
 
@@ -616,7 +656,7 @@ CONTRACT gyftietoken : public contract
     {
         // config_table config(get_self(), get_self().value);
         // auto c = config.get();
-        name gftorderbook = gyftieClass.getstate().gftorderbook;
+        name gftorderbook = gyftieClass.get_state().gftorderbook;
 
         buyorder_table b_t(gftorderbook, gftorderbook.value);
         auto b_index = b_t.get_index<"byprice"_n>();
@@ -659,7 +699,7 @@ CONTRACT gyftietoken : public contract
     {
         return gyftieClass.get_usercount_factor();
         // state_table state = state_table (get_self(), get_self().value);
-        // auto s = gyftieClass.getstate();
+        // auto s = gyftieClass.get_state();
         
         // float increase_since_last_step = (float) (s.account_count - s.prior_step_user_count) / (float) s.prior_step_user_count;
 
@@ -801,3 +841,6 @@ CONTRACT gyftietoken : public contract
 
 
 };
+
+
+#endif

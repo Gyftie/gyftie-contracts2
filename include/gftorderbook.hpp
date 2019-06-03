@@ -7,7 +7,8 @@
 #include <string>
 #include <algorithm>    // std::find
 #include <eosio/singleton.hpp>
-#include <eosio/transaction.hpp> // include this for transactions
+// #include <eosio/transaction.hpp> // include this for transactions
+#include "transactions.hpp"
 
 #include <math.h>
 

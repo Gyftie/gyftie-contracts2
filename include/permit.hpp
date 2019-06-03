@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PERMIT_H
+#define PERMIT_H
 
 #include "lock.hpp"
 #include "gyft.hpp"
@@ -8,6 +9,7 @@
 
 using namespace eosio;
 using namespace common;
+
 
 class Permit {
 
@@ -74,7 +76,7 @@ class Permit {
             eosio::check (lockClass.lock_t.find(account.value) == lockClass.lock_t.end(), "Account is locked from performing activity.");
 
             GyftieClass gyftieClass (contract);
-            eosio::check (gyftieClass.getstate().paused == UNPAUSED, "Contract is paused.");
+            eosio::check (gyftieClass.get_state().paused == UNPAUSED, "Contract is paused.");
             
             // Verify that the account is not being challenged
         }
@@ -191,3 +193,4 @@ class Permit {
 };
 
 
+#endif

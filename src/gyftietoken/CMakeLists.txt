@@ -1,9 +1,9 @@
+cmake_minimum_required(VERSION 3.13)
 project(gyftietoken)
 
 set(EOSIO_WASM_OLD_BEHAVIOR "Off")
 find_package(eosio.cdt)
 
-add_contract( gyftietoken gyftietoken gyftietoken.cpp )
+add_contract( gyftietoken gyftietoken gyftietoken.cpp ../classes/profile.cpp ../classes/gyft.cpp ../classes/proposal.cpp ../classes/reputation.cpp ../classes/lock.cpp ../classes/gyftie.cpp)
 target_include_directories( gyftietoken PUBLIC ${CMAKE_SOURCE_DIR}/../include )
-target_ricardian_directory( gyftietoken ${CMAKE_SOURCE_DIR}/../ricardian )
 
