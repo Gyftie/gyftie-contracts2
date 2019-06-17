@@ -96,7 +96,7 @@ CONTRACT gyftietoken : public contract
 
     //   Proposal Actions
     ACTION propose(const name proposer, const string notes);
-    ACTION promoteprop (const uint64_t proposal_id);
+    //ACTION promoteprop (const uint64_t proposal_id);
     ACTION votefor(const name voter, const uint64_t proposal_id);
     ACTION voteagainst(const name voter, const uint64_t proposal_id);
     ACTION unvoteprop(const name voter, const uint64_t proposal_id);
@@ -141,7 +141,7 @@ CONTRACT gyftietoken : public contract
     using unlockchain_action = eosio::action_wrapper<"unlockchain"_n, &gyftietoken::unlockchain>;
     using unlock_action = eosio::action_wrapper<"unlock"_n, &gyftietoken::unlock>;
     using propose_action = eosio::action_wrapper<"propose"_n, &gyftietoken::propose>;
-    using promoteprop_action = eosio::action_wrapper<"promoteprop"_n, &gyftietoken::promoteprop>;
+    //using promoteprop_action = eosio::action_wrapper<"promoteprop"_n, &gyftietoken::promoteprop>;
     using votefor_action = eosio::action_wrapper<"votefor"_n, &gyftietoken::votefor>;
     using voteagainst_action = eosio::action_wrapper<"voteagainst"_n, &gyftietoken::voteagainst>;
     using unvoteprop_action = eosio::action_wrapper<"unvoteprop"_n, &gyftietoken::unvoteprop>;

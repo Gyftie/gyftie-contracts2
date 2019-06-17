@@ -4,6 +4,6 @@ project(gyftietoken)
 set(EOSIO_WASM_OLD_BEHAVIOR "Off")
 find_package(eosio.cdt)
 
-add_contract( gyftietoken gyftietoken gyftietoken.cpp ../classes/profile.cpp ../classes/gyft.cpp ../classes/proposal.cpp ../classes/reputation.cpp ../classes/lock.cpp ../classes/gyftie.cpp)
+add_contract( gyftietoken gyftietoken gyftietoken.cpp)
 target_include_directories( gyftietoken PUBLIC ${CMAKE_SOURCE_DIR}/../include )
 
