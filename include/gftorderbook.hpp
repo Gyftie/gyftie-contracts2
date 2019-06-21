@@ -124,6 +124,14 @@ CONTRACT gftorderbook : public contract
     const uint8_t   UNPAUSED = 0;
     const float     MAKER_REWARD = 0.0100000000;
 
+    TABLE Promo 
+    {
+        uint64_t promo_count = 0;
+    };
+
+    typedef singleton<"promos"_n, Promo> promo_table;
+    typedef eosio::multi_index<"promos"_n, Promo> promo_table_placeholder;
+
    TABLE Config
    {
        name         gyftiecontract;
@@ -784,6 +792,28 @@ CONTRACT gftorderbook : public contract
         }
 
         // buildbuckets_deferred();
+    }
+
+    void marketbuyr (name buyer, asset eos_amount) 
+    {
+        require_auth (buyer);
+        eosio::check ( is_gyftie_account (buyer), "Buyer is not a gyftie account." );
+        eosio::check (!is_paused(), "Contract is paused - no actions allowed.");
+
+        sellorder_table s_t (get_self(), get_self().value);
+        auto s_index = s_t.get_index<"byprice"_n>();
+        auto s_itr = s_index.begin ();
+        if (s_itr == s_index.end()) {
+            return;
+        }
+
+        asset remainder_to_spend = eos_amount - s_itr->order_value;
+        
+        buygft (s_itr->order_id, buyer, eos_amount);
+
+        if (remainder_to_spend.amount > 0) {
+            marketbuyr (buyer, remainder_to_spend);
+        }    
     }
 
     void sellgft (uint64_t buyorder_id, name seller, asset gft_to_sell) 

@@ -619,20 +619,28 @@ ACTION gftorderbook::marketbuy (name buyer, asset eos_amount)
     eosio::check ( is_gyftie_account (buyer), "Buyer is not a gyftie account." );
     eosio::check (!is_paused(), "Contract is paused - no actions allowed.");
 
-    sellorder_table s_t (get_self(), get_self().value);
-    auto s_index = s_t.get_index<"byprice"_n>();
-    auto s_itr = s_index.begin ();
-    if (s_itr == s_index.end()) {
-        return;
-    }
+    // print (" Calling marketbuyr \n");
+    marketbuyr (buyer, eos_amount);
+    // print (" After marketbuyr \n");
 
-    asset remainder_to_spend = eos_amount - s_itr->order_value;
-    
-    buygft (s_itr->order_id, buyer, eos_amount);
+    config_table config (get_self(), get_self().value);
+    auto c = config.get();
+    state_table state (get_self(), get_self().value);
+    State s = state.get();
 
-    if (remainder_to_spend.amount > 0) {
-        marketbuy (buyer, remainder_to_spend);
-    }    
+    asset lowest_sell_price = get_lowest_sell();
+    // print (" Lowest sell    : ", lowest_sell_price, "\n");
+
+    // print (" Order book size    : ", s.buy_orderbook_size_gft, "\n");
+    asset gft_purchasing = get_gft_amount (lowest_sell_price, eos_amount);
+    // print (" GFT Purchasing : ", gft_purchasing, "\n");
+
+    action (
+        permission_level{get_self(), "owner"_n},
+        c.gyftiecontract, "ibpromo"_n,
+        std::make_tuple(buyer, gft_purchasing, s.buy_orderbook_size_gft))
+    .send();
+ 
 }
 
 ACTION gftorderbook::marketsell (name seller, asset gft_amount) 

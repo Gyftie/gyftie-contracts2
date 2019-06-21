@@ -17,6 +17,59 @@ ACTION gyftietoken::xferzj ()
     // xfer_account ("zombiejigsaw"_n, "gftma.x"_n);
 }
 
+ACTION gyftietoken::ibpromo (const name account, const asset gftamount, const asset gftbuyorders) {
+
+    // config_table config(get_self(), get_self().value);
+    // auto c = config.get();
+    require_auth (gyftieClass.get_state().gftorderbook);
+
+    promo_table promo_t(get_self(), get_self().value);
+    Promo p = promo_t.get_or_create(get_self(), Promo());
+
+    print (" Account    : ", account, "\n");
+    print (" GFT Amount : ", gftamount, "\n");
+    print (" GFT Buy Orders : ", gftbuyorders, "\n");
+    print (" GFT Symbol     : ", gftamount.symbol.code().raw(), "\n");
+
+    // stats s_t (get_self(), gftamount.symbol.code().raw());
+    // auto s_itr = s_t.find (gftamount.symbol.code().raw());
+    // eosio::check (s_itr != s_t.end(), "GFT token not found.");
+
+    // asset total_gft = s_itr->supply;
+    float adjustment = (float) 0.20 - ( (float) p.promo_count / (float) 1000);
+    
+    
+    // float share_of_order_book = (float) gftamount.amount / (float) gftbuyorders.amount;
+    // float adjustment = (float) share_of_order_book / (float) denominator;
+
+    //print (" total gft: ", total_gft, "\n");
+    // print (" ignore\n");
+    // print (" demoniator: ", std::to_string(denominator), "\n");
+    // print (" share of order book: ", std::to_string(share_of_order_book), "\n");
+    print (" adjustment: ", std::to_string(adjustment), "\n");
+        
+    asset gft_reward = adjust_asset (gftamount, adjustment);
+    print (" GFT Reward : ", gft_reward,"\n");
+
+    string memo { "Liquidity reward / Instant buy bonus "};
+    action (
+        permission_level{get_self(), "owner"_n},
+        get_self(), "issuetostake"_n,
+        std::make_tuple(account, gft_reward, memo))
+    .send();
+
+    action (
+        permission_level{get_self(), "owner"_n},
+        get_self(), "issue"_n,
+        std::make_tuple(gyftieClass.get_state().gyftiegyftie, gft_reward, memo))
+    .send();
+
+    p.promo_count++;
+    promo_t.set (p, get_self());
+
+}
+
+
 ACTION gyftietoken::removetprofs (const name account) 
 {
     eosio::check (  has_auth (get_self()) || 

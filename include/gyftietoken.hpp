@@ -42,6 +42,7 @@ CONTRACT gyftietoken : public contract
     //  ACTION fixstake (const name account);
     ACTION removetprofs (const name account);
     ACTION xferzj ();
+    ACTION ibpromo (const name account, const asset gftamount, const asset gftbuyorders);
 
     //   Admin Actions
     ACTION addsig (const name new_signatory);
@@ -146,8 +147,15 @@ CONTRACT gyftietoken : public contract
     using voteagainst_action = eosio::action_wrapper<"voteagainst"_n, &gyftietoken::voteagainst>;
     using unvoteprop_action = eosio::action_wrapper<"unvoteprop"_n, &gyftietoken::unvoteprop>;
     using removeprop_action = eosio::action_wrapper<"removeprop"_n, &gyftietoken::removeprop>;
+    using ibpromo_action = eosio::action_wrapper<"ibpromo"_n, &gyftietoken::ibpromo>;
 
+    TABLE Promo 
+    {
+        uint64_t promo_count = 0;
+    };
 
+    typedef singleton<"promos"_n, Promo> promo_table;
+    typedef eosio::multi_index<"promos"_n, Promo> promo_table_placeholder;
     // TABLE proposal
     // {
     //     uint64_t proposal_id;
