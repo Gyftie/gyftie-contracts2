@@ -24,12 +24,12 @@
 #include "lock.hpp"
 #include "permit.hpp"
 #include "proposal.hpp"
+#include "badge.hpp"
 
 using std::string;
 using std::vector;
 using std::tie;
 using namespace eosio;
-
 
 CONTRACT gyftietoken : public contract
 {
@@ -68,6 +68,8 @@ CONTRACT gyftietoken : public contract
     ACTION unstaked2 (const name user, const asset quantity); 
     ACTION stake (const name account, const asset quantity);
 
+    ACTION verifyuser (const name& verifier, const name& account_to_verify);
+
     //  Gyfting Actions
     ACTION gyft2 (const name from, 
                     const name to, 
@@ -81,6 +83,11 @@ CONTRACT gyftietoken : public contract
     ACTION promoteuser (const name account);
     ACTION voteforuser (const name voter, const name profile, const uint8_t vote);
     ACTION addrating(const name rater, const name ratee, const uint8_t rating);
+
+    //  Badge Actions
+    ACTION createbadge (const string& badge_name, const string& description, 
+                        const asset& reward, const string& badge_image);
+    ACTION issuebadge (const name& badge_recipient, const uint64_t& badge_id, const string& notes);
 
     //   Profile Challenge Actions
     ACTION nchallenge (const name challenger_account, const name challenged_account, const string notes);
@@ -111,6 +118,7 @@ CONTRACT gyftietoken : public contract
     ReputationClass repClass = ReputationClass (get_self());
     LockClass lockClass = LockClass (get_self());
     ProposalClass proposalClass = ProposalClass (get_self());
+    BadgeClass badgeClass = BadgeClass (get_self());
 
     using removetprofs_action = eosio::action_wrapper<"removetprofs"_n, &gyftietoken::removetprofs>;
     using xferzj_action = eosio::action_wrapper<"xferzj"_n, &gyftietoken::xferzj>;
@@ -846,8 +854,6 @@ CONTRACT gyftietoken : public contract
             p.gft_balance += value;
         });
     }
-
-
 };
 
 

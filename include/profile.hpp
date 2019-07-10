@@ -41,15 +41,32 @@ class ProfileClass
       uint64_t      primary_key() const { return account.value; }
     };
 
+    struct [[ eosio::table, eosio::contract("gyftietoken") ]] Verify
+    {
+      name          verifier;
+      name          verified;
+      uint32_t      verification_date;
+      uint64_t      primary_key() const { return verifier.value; }
+      uint64_t      by_verified() const { return verified.value; }
+    };
+
+    typedef eosio::multi_index<"verifies"_n, Verify, 
+      indexed_by<"byverified"_n,
+        const_mem_fun<Verify, uint64_t, &Verify::by_verified>>
+      > verify_table;
+
     typedef eosio::multi_index<"profiles"_n, Profile,
       indexed_by<"byrank"_n,
         const_mem_fun<Profile, uint64_t, &Profile::by_rank>>>
       profile_table;
 
     profile_table profile_t;
+    verify_table  verify_t;
 
     ProfileClass (const name& contract) 
-    : profile_t (contract, contract.value), contract (contract) {}
+    : profile_t (contract, contract.value), 
+      verify_t (contract, contract.value), 
+      contract (contract) {}
 
     Profile load (const name& account) {
         auto p_itr = profile_t.find (account.value);
@@ -78,10 +95,25 @@ class ProfileClass
         return profile_t.find (account.value) != profile_t.end();
     }
 
+    void verifyuser (const name& verifier, const name& account_to_verify) {
+      auto v_itr = verify_t.find (verifier.value);
+      bool already_verified = false;
+      while (v_itr != verify_t.end()) {
+        check (v_itr->verified == account_to_verify, "Verifier has already verififed user. Verifier: " +
+          verifier.to_string() + "; Account being verfied: " + account_to_verify.to_string());
+          v_itr++;
+      }
+
+      verify_t.emplace (contract, [&](auto &v) {
+        v.verifier = verifier;
+        v.verified = account_to_verify;
+      });
+    }
+
     void unstake (const name& account, const asset& quantity) {
 
         Profile profile = load (account);
-        check (profile.unstaking_balance >= quantity, "Unstaking balance is less than quantity unstaking.");
+        check (profile.unstaking_balance >= quantity, "Unstaking balance is less than requested.");
 
         profile_t.modify (profile, contract, [&](auto &p) {
             p.gft_balance += quantity;

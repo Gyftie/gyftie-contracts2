@@ -69,6 +69,18 @@ ACTION gyftietoken::ibpromo (const name account, const asset gftamount, const as
 
 }
 
+ACTION gyftietoken::verifyuser (const name& verifier, const name& account_to_verify) {
+    profileClass.verifyuser (verifier, account_to_verify);
+}
+
+ACTION gyftietoken::createbadge (const string& badge_name, const string& description, 
+                    const asset& reward, const string& badge_image) {
+    badgeClass.add_badge (badge_name, description, reward, badge_image);
+} 
+
+ACTION gyftietoken::issuebadge (const name& badge_recipient, const uint64_t& badge_id, const string& notes) {
+    badgeClass.reward_badge(badge_recipient, badge_id, notes);
+}
 
 ACTION gyftietoken::removetprofs (const name account) 
 {

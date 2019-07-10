@@ -28,9 +28,22 @@ class ProposalClass {
             // DEPLOY
             uint64_t        rank = 0;
             uint64_t        primary_key() const { return proposal_id; }
+            // DEPLOY
+            uint64_t        by_created()  const { return created_date; }
+            uint64_t        by_expiration() const { return expiration_date; }
         };
 
         typedef eosio::multi_index<"proposals"_n, Proposal> proposal_table;
+
+        // DEPLOY
+
+        // typedef eosio::multi_index<"proposals:"_n, Proposal,
+        //     indexed_by<"bycreated"_n,
+        //         const_mem_fun<Proposal, uint64_t, &Proposal::bycreated>>
+        //     indexed_by<"byexpire"_n,
+        //         const_mem_fun<Proposal, uint64_t, &Proposal::byexpire>>
+        // > proposal_table;
+
 
         name            contract;
         proposal_table  proposal_t;
