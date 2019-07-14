@@ -24,10 +24,12 @@ class LockClass  {
         name        contract;
         lock_table  lock_t;
         GyftClass   gyftClass;
+        GyftieClass gyftieClass;
 
         LockClass (const name& contract) 
             : lock_t (contract, contract.value), 
             gyftClass (contract),
+            gyftieClass (contract),
             contract (contract){}
 
         iterator<std::bidirectional_iterator_tag, const Lock> lock (const name& account_to_lock, const string& note) {

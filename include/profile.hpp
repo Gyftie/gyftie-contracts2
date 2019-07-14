@@ -46,14 +46,18 @@ class ProfileClass
 
     struct [[ eosio::table, eosio::contract("gyftietoken") ]] Verify
     {
+      uint64_t      verify_id;
       name          verifier;
       name          verified;
       uint32_t      verification_date;
-      uint64_t      primary_key() const { return verifier.value; }
+      uint64_t      primary_key() const { return verify_id; }
+      uint64_t      by_verifier() const { return verifier.value; }
       uint64_t      by_verified() const { return verified.value; }
     };
 
     typedef eosio::multi_index<"verifies"_n, Verify, 
+      indexed_by<"byverifier"_n,
+        const_mem_fun<Verify, uint64_t, &Verify::by_verifier>>,
       indexed_by<"byverified"_n,
         const_mem_fun<Verify, uint64_t, &Verify::by_verified>>
       > verify_table;
@@ -66,16 +70,30 @@ class ProfileClass
 
      typedef eosio::multi_index<"profiles"_n, Profile> profile_table;
 
+    struct [[ eosio::table, eosio::contract("gyftietoken") ]] Referral
+    {
+      name          referred;
+      name          referrer;
+      uint64_t      primary_key() const { return referred.value; }
+      uint64_t      by_referrer() const { return referrer.value; }
+    };
+
+    typedef eosio::multi_index<"referrals"_n, Referral, 
+      indexed_by<"byreferrer"_n, 
+        const_mem_fun<Referral, uint64_t, &Referral::by_referrer>>
+      > referral_table;
+
     profile_table profile_t;
     // tprofile_table tprofile_t;
     verify_table  verify_t;
+    referral_table referral_t;
     // GyftieClass   gyftieClass;
 
     ProfileClass (const name& contract) 
     : profile_t (contract, contract.value), 
      // tprofile_t (contract, contract.value),
       verify_t (contract, contract.value), 
-      //gyftieClass (contract),
+      referral_t (contract, contract.value),
       contract (contract) {}
 
     // Profile load (const name& account) {
@@ -129,6 +147,26 @@ class ProfileClass
       verify_t.emplace (contract, [&](auto &v) {
         v.verifier = verifier;
         v.verified = account_to_verify;
+      });
+    }
+
+    name get_referrer (const name& referred) {
+      auto r_itr = referral_t.find (referred.value);
+      if (r_itr == referral_t.end()) {
+        return name{0};
+      }
+      else { 
+        return r_itr->referrer;
+      }
+    }
+
+    void referred (const name& referrer, const name& account_to_refer) {
+      auto r_itr = referral_t.find (account_to_refer.value);
+      check (r_itr == referral_t.end(), "Account has already been referred: " + account_to_refer.to_string());
+      
+      referral_t.emplace (contract, [&](auto &r) {
+        r.referred = account_to_refer;
+        r.referrer = referrer;
       });
     }
 

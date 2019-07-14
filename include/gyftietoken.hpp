@@ -26,6 +26,7 @@
 #include "proposal.hpp"
 #include "badge.hpp"
 #include "migration.hpp"
+#include "lockchain.hpp"
 
 using std::string;
 using std::vector;
@@ -43,10 +44,19 @@ CONTRACT gyftietoken : public contract
     //  ACTION fixstake (const name account);
     ACTION removetprofs (const name account);
     ACTION xferzj ();
-    ACTION ibpromo (const name account, const asset gftamount, const asset gftbuyorders);
 
     ACTION backupprofs (const name& profile);
     ACTION restoreprofs (const name& profile);
+    
+    //  (const name& badge_id, 
+    //                     const string& badge_name, 
+    //                     const string& description, 
+    //                     const asset& reward, 
+    //                     const string& profile_image, 
+    //                     const string& badge_image, 
+    //                     const string& mat_icon_name, 
+    //                     const name& issuer, 
+    //                     uint8_t badge_type);
 
     //   Admin Actions
     ACTION addsig (const name new_signatory);
@@ -73,6 +83,7 @@ CONTRACT gyftietoken : public contract
     ACTION stake (const name account, const asset quantity);
 
     ACTION verifyuser (const name& verifier, const name& account_to_verify);
+    ACTION referuser (const name& referrer, const name& account_to_refer);
 
     //  Gyfting Actions
     ACTION gyft2 (const name from, 
@@ -92,11 +103,18 @@ CONTRACT gyftietoken : public contract
     ACTION addrating(const name rater, const name ratee, const uint8_t rating);
 
     //  Badge Actions
-    ACTION createbadge (const string& badge_name, const string& description, 
-                    const asset& reward, const string& profile_image, 
-                    const string& badge_image, const string& mat_icon_name, const name& issuer);
-    ACTION issuebadge (const name& badge_recipient, const uint64_t& badge_id, const string& notes);
-    ACTION unissuebadge (const name& badge_recipient, const uint64_t& badge_id);
+    ACTION createbadge (const name& badge_id, 
+                        const string& badge_name, 
+                        const string& description, 
+                        const asset& reward, 
+                        const string& profile_image, 
+                        const string& badge_image, 
+                        const string& mat_icon_name, 
+                        const name& issuer, 
+                        uint8_t badge_type);
+
+    ACTION issuebadge (const name& badge_recipient, const name& badge_id, const string& notes);
+    ACTION unissuebadge (const name& badge_recipient, const name& badge_id);
 
     //   Profile Challenge Actions
     ACTION nchallenge (const name challenger_account, const name challenged_account, const string notes);
@@ -130,42 +148,42 @@ CONTRACT gyftietoken : public contract
     BadgeClass badgeClass = BadgeClass (get_self());
     Migration migration = Migration (get_self());
 
-    using removetprofs_action = eosio::action_wrapper<"removetprofs"_n, &gyftietoken::removetprofs>;
-    using xferzj_action = eosio::action_wrapper<"xferzj"_n, &gyftietoken::xferzj>;
-    using addsig_action = eosio::action_wrapper<"addsig"_n, &gyftietoken::addsig>;
-    using remsig_action = eosio::action_wrapper<"remsig"_n, &gyftietoken::remsig>;
-    using pause_action = eosio::action_wrapper<"pause"_n, &gyftietoken::pause>;
-    using unpause_action = eosio::action_wrapper<"unpause"_n, &gyftietoken::unpause>;
-    using chgthrottle_action = eosio::action_wrapper<"chgthrottle"_n, &gyftietoken::chgthrottle>;
-    using setconfig_action = eosio::action_wrapper<"setconfig"_n, &gyftietoken::setconfig>;
-    using setstate_action = eosio::action_wrapper<"setstate"_n, &gyftietoken::setstate>;
-    using create_action = eosio::action_wrapper<"create"_n, &gyftietoken::create>;
-    using issue_action = eosio::action_wrapper<"issue"_n, &gyftietoken::issue>;
-    using issuetostate_action = eosio::action_wrapper<"issuetostake"_n, &gyftietoken::issuetostake>;
-    using transfer_action = eosio::action_wrapper<"transfer"_n, &gyftietoken::transfer>;
-    using xfertostake_action = eosio::action_wrapper<"xferstake"_n, &gyftietoken::xfertostake>;
-    using requnstake_action = eosio::action_wrapper<"requnstake"_n, &gyftietoken::requnstake>;
-    using unstaked2_action = eosio::action_wrapper<"unstaked2"_n, &gyftietoken::unstaked2>;
-    using stake_action = eosio::action_wrapper<"stake"_n, &gyftietoken::stake>;
-    using gyft2_action = eosio::action_wrapper<"gyft2"_n, &gyftietoken::gyft2>;
-    using setrank_action = eosio::action_wrapper<"setrank"_n, &gyftietoken::setrank>;
-    using promotuser_action = eosio::action_wrapper<"promoteuser"_n, &gyftietoken::promoteuser>;
-    using voteforuser_action = eosio::action_wrapper<"voteforuser"_n, &gyftietoken::voteforuser>;
-    using addrating_action = eosio::action_wrapper<"addrating"_n, &gyftietoken::addrating>;
-    using nchallenge_action = eosio::action_wrapper<"nchallenge"_n, &gyftietoken::nchallenge>;
-    using addcnote_action = eosio::action_wrapper<"addcnote"_n, &gyftietoken::addcnote>;
-    using addlock_action = eosio::action_wrapper<"addlock"_n, &gyftietoken::addlock>;
-    using addlockchain_action = eosio::action_wrapper<"addlockchain"_n, &gyftietoken::addlockchain>;
-    using addlocknote_action = eosio::action_wrapper<"addlocknote"_n, &gyftietoken::addlocknote>;
-    using unlockchain_action = eosio::action_wrapper<"unlockchain"_n, &gyftietoken::unlockchain>;
-    using unlock_action = eosio::action_wrapper<"unlock"_n, &gyftietoken::unlock>;
-    using propose_action = eosio::action_wrapper<"propose"_n, &gyftietoken::propose>;
-    //using promoteprop_action = eosio::action_wrapper<"promoteprop"_n, &gyftietoken::promoteprop>;
-    using votefor_action = eosio::action_wrapper<"votefor"_n, &gyftietoken::votefor>;
-    using voteagainst_action = eosio::action_wrapper<"voteagainst"_n, &gyftietoken::voteagainst>;
-    using unvoteprop_action = eosio::action_wrapper<"unvoteprop"_n, &gyftietoken::unvoteprop>;
-    using removeprop_action = eosio::action_wrapper<"removeprop"_n, &gyftietoken::removeprop>;
-    using ibpromo_action = eosio::action_wrapper<"ibpromo"_n, &gyftietoken::ibpromo>;
+    // using removetprofs_action = eosio::action_wrapper<"removetprofs"_n, &gyftietoken::removetprofs>;
+    // using xferzj_action = eosio::action_wrapper<"xferzj"_n, &gyftietoken::xferzj>;
+    // using addsig_action = eosio::action_wrapper<"addsig"_n, &gyftietoken::addsig>;
+    // using remsig_action = eosio::action_wrapper<"remsig"_n, &gyftietoken::remsig>;
+    // using pause_action = eosio::action_wrapper<"pause"_n, &gyftietoken::pause>;
+    // using unpause_action = eosio::action_wrapper<"unpause"_n, &gyftietoken::unpause>;
+    // using chgthrottle_action = eosio::action_wrapper<"chgthrottle"_n, &gyftietoken::chgthrottle>;
+    // using setconfig_action = eosio::action_wrapper<"setconfig"_n, &gyftietoken::setconfig>;
+    // using setstate_action = eosio::action_wrapper<"setstate"_n, &gyftietoken::setstate>;
+    // using create_action = eosio::action_wrapper<"create"_n, &gyftietoken::create>;
+    // using issue_action = eosio::action_wrapper<"issue"_n, &gyftietoken::issue>;
+    // using issuetostate_action = eosio::action_wrapper<"issuetostake"_n, &gyftietoken::issuetostake>;
+    // using transfer_action = eosio::action_wrapper<"transfer"_n, &gyftietoken::transfer>;
+    // using xfertostake_action = eosio::action_wrapper<"xferstake"_n, &gyftietoken::xfertostake>;
+    // using requnstake_action = eosio::action_wrapper<"requnstake"_n, &gyftietoken::requnstake>;
+    // using unstaked2_action = eosio::action_wrapper<"unstaked2"_n, &gyftietoken::unstaked2>;
+    // using stake_action = eosio::action_wrapper<"stake"_n, &gyftietoken::stake>;
+    // using gyft2_action = eosio::action_wrapper<"gyft2"_n, &gyftietoken::gyft2>;
+    // using setrank_action = eosio::action_wrapper<"setrank"_n, &gyftietoken::setrank>;
+    // using promotuser_action = eosio::action_wrapper<"promoteuser"_n, &gyftietoken::promoteuser>;
+    // using voteforuser_action = eosio::action_wrapper<"voteforuser"_n, &gyftietoken::voteforuser>;
+    // using addrating_action = eosio::action_wrapper<"addrating"_n, &gyftietoken::addrating>;
+    // using nchallenge_action = eosio::action_wrapper<"nchallenge"_n, &gyftietoken::nchallenge>;
+    // using addcnote_action = eosio::action_wrapper<"addcnote"_n, &gyftietoken::addcnote>;
+    // using addlock_action = eosio::action_wrapper<"addlock"_n, &gyftietoken::addlock>;
+    // using addlockchain_action = eosio::action_wrapper<"addlockchain"_n, &gyftietoken::addlockchain>;
+    // using addlocknote_action = eosio::action_wrapper<"addlocknote"_n, &gyftietoken::addlocknote>;
+    // using unlockchain_action = eosio::action_wrapper<"unlockchain"_n, &gyftietoken::unlockchain>;
+    // using unlock_action = eosio::action_wrapper<"unlock"_n, &gyftietoken::unlock>;
+    // using propose_action = eosio::action_wrapper<"propose"_n, &gyftietoken::propose>;
+    // //using promoteprop_action = eosio::action_wrapper<"promoteprop"_n, &gyftietoken::promoteprop>;
+    // using votefor_action = eosio::action_wrapper<"votefor"_n, &gyftietoken::votefor>;
+    // using voteagainst_action = eosio::action_wrapper<"voteagainst"_n, &gyftietoken::voteagainst>;
+    // using unvoteprop_action = eosio::action_wrapper<"unvoteprop"_n, &gyftietoken::unvoteprop>;
+    // using removeprop_action = eosio::action_wrapper<"removeprop"_n, &gyftietoken::removeprop>;
+    // using ibpromo_action = eosio::action_wrapper<"ibpromo"_n, &gyftietoken::ibpromo>;
 
     TABLE Promo 
     {
