@@ -12,7 +12,7 @@ class LockClass  {
 
     public:
 
-        TABLE Lock 
+        struct [[ eosio::table, eosio::contract("gyftietoken") ]] Lock 
         {
             name            account;
             vector<string>  lock_notes;

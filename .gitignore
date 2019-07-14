@@ -9,3 +9,4 @@ gyftie_project-prefix
 **/*.abi
 **/*.wasm
 .DS_Store
+tests/node_modules

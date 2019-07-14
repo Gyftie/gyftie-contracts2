@@ -13,7 +13,7 @@ class ProposalClass {
 
     public:
         
-        TABLE Proposal
+        struct [[ eosio::table, eosio::contract("gyftietoken") ]] Proposal
         {
             uint64_t        proposal_id;
             uint32_t        created_date;
@@ -26,11 +26,11 @@ class ProposalClass {
             uint32_t        expiration_date;
 
             // DEPLOY
-            uint64_t        rank = 0;
+            // uint64_t        rank = 0;
             uint64_t        primary_key() const { return proposal_id; }
             // DEPLOY
-            uint64_t        by_created()  const { return created_date; }
-            uint64_t        by_expiration() const { return expiration_date; }
+            // uint64_t        by_created()  const { return created_date; }
+            // uint64_t        by_expiration() const { return expiration_date; }
         };
 
         typedef eosio::multi_index<"proposals"_n, Proposal> proposal_table;
@@ -70,21 +70,21 @@ class ProposalClass {
                 p.votes_against     = 0;
 
                 // DEPLOY 
-                p.rank              = profileClass.profile_t.get(proposer.value).rank;
+                // p.rank              = profileClass.profile_t.get(proposer.value).rank;
                 p.expiration_date   = current_block_time().to_time_point().sec_since_epoch() + (60 * 60 * 24 * 30);  // 30 days
             });
         }
 
-        auto load (const uint64_t& proposal_id) {
-            auto p_itr = proposal_t.find (proposal_id);
-            eosio::check (p_itr != proposal_t.end(), "Proposal is not found.");
-            return *p_itr;
-        }
+        // auto load (const uint64_t& proposal_id) {
+        //     auto p_itr = proposal_t.find (proposal_id);
+        //     eosio::check (p_itr != proposal_t.end(), "Proposal is not found.");
+        //     return *p_itr;
+        // }
 
         iterator<std::bidirectional_iterator_tag, const Proposal> remove (const uint64_t& proposal_id) {
 
             auto p_itr = proposal_t.find (proposal_id);
-            eosio::check (p_itr != proposal_t.end(), "Proposal ID is not found.");
+            eosio::check (p_itr != proposal_t.end(), "Proposal ID is not found: " + std::to_string(proposal_id));
 
             Permit::permit (contract, p_itr->proposer, name{0}, Permit::REMOVE_PROPOSAL);
 
@@ -101,31 +101,33 @@ class ProposalClass {
             eosio::check (current_block_time().to_time_point().sec_since_epoch() <= p.expiration_date, "Proposal has expired.");
         }
 
-        Proposal vote_for (const name& voter, const uint64_t& proposal_id) {
+        iterator<std::bidirectional_iterator_tag, const Proposal> vote_for (const name& voter, const uint64_t& proposal_id) {
             Permit::permit (contract, voter, name{0}, Permit::AUTH_ACTIVITY);
             
-            auto prop = load (proposal_id);
-            check_vote (prop, voter);
+            auto p_itr = proposal_t.find (proposal_id);
+            check (p_itr != proposal_t.end(), "Proposal ID does not exist: " + std::to_string(proposal_id));
+            check_vote (*p_itr, voter);
 
-            proposal_t.modify (prop, contract, [&](auto &p) {
+            proposal_t.modify (p_itr, contract, [&](auto &p) {
                 p.votes_for++;
                 p.voters_for.push_back (voter);
             });
-            return prop;
+            return p_itr;
         }
 
-        Proposal vote_against (const name& voter, const uint64_t& proposal_id) {
+        iterator<std::bidirectional_iterator_tag, const Proposal> vote_against (const name& voter, const uint64_t& proposal_id) {
             Permit::permit (contract, voter, name{0}, Permit::AUTH_ACTIVITY);
 
-            auto prop = load (proposal_id);
-            check_vote (prop, voter);
+            auto p_itr = proposal_t.find (proposal_id);
+            check (p_itr != proposal_t.end(), "Proposal ID does not exist: " + std::to_string(proposal_id));
+            check_vote (*p_itr, voter);
             
-            proposal_t.modify (prop, contract, [&](auto &p) {
+            proposal_t.modify (p_itr, contract, [&](auto &p) {
                 p.votes_for++;
                 p.voters_for.push_back (voter);
             });
 
-            return prop;
+            return p_itr;
         }
                 
 

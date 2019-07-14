@@ -7,6 +7,7 @@
 #include <eosio/asset.hpp>
 
 #include "common.hpp"
+// #include "gyftie.hpp"
 
 using std::string;
 using std::vector;
@@ -32,14 +33,16 @@ class ProfileClass
       asset         unstaking_balance;
 
       // DEPLOY
-      vector<name>  promotion_votes;
-      uint64_t      rank = 0;
-      uint64_t      by_rank() const { return rank; }
+      // vector<name>  promotion_votes;
+      // uint64_t      rank = 0;
+      // uint64_t      by_rank() const { return rank; }
 
-      uint64_t      voter_count;
-      uint64_t      scaled_sum_rating;
+      // uint64_t      voter_count;
+      // uint64_t      scaled_sum_rating;
       uint64_t      primary_key() const { return account.value; }
     };
+
+    
 
     struct [[ eosio::table, eosio::contract("gyftietoken") ]] Verify
     {
@@ -55,24 +58,43 @@ class ProfileClass
         const_mem_fun<Verify, uint64_t, &Verify::by_verified>>
       > verify_table;
 
-    typedef eosio::multi_index<"profiles"_n, Profile,
-      indexed_by<"byrank"_n,
-        const_mem_fun<Profile, uint64_t, &Profile::by_rank>>>
-      profile_table;
+    // DEPLOY
+    // typedef eosio::multi_index<"profiles"_n, Profile,
+    //   indexed_by<"byrank"_n,
+    //     const_mem_fun<Profile, uint64_t, &Profile::by_rank>>>
+    //   profile_table;
+
+     typedef eosio::multi_index<"profiles"_n, Profile> profile_table;
 
     profile_table profile_t;
+    // tprofile_table tprofile_t;
     verify_table  verify_t;
+    // GyftieClass   gyftieClass;
 
     ProfileClass (const name& contract) 
     : profile_t (contract, contract.value), 
+     // tprofile_t (contract, contract.value),
       verify_t (contract, contract.value), 
+      //gyftieClass (contract),
       contract (contract) {}
 
-    Profile load (const name& account) {
-        auto p_itr = profile_t.find (account.value);
-        eosio::check (p_itr != profile_t.end(), "Account profile is not found.");
+    // Profile load (const name& account) {
+    //     auto p_itr = profile_t.find (account.value);
+    //     eosio::check (p_itr != profile_t.end(), "Account profile is not found.");
 
-        return *p_itr;
+    //     return *p_itr;
+    // }
+
+    iterator<std::bidirectional_iterator_tag, const ProfileClass::Profile> 
+    create (const name& account) {
+        check (profile_t.find (account.value) == profile_t.end(), "Account already has a Gyftie profile.");
+
+        return profile_t.emplace (contract, [&](auto &p) {
+            p.account = account;
+            p.gft_balance = asset {0, common::S_GFT};
+            p.unstaking_balance = asset {0, common::S_GFT};
+            p.staked_balance = asset {0, common::S_GFT};
+        });         
     }
 
     iterator<std::bidirectional_iterator_tag, const ProfileClass::Profile> 
@@ -112,36 +134,36 @@ class ProfileClass
 
     void unstake (const name& account, const asset& quantity) {
 
-        Profile profile = load (account);
-        check (profile.unstaking_balance >= quantity, "Unstaking balance is less than requested.");
+        auto p_itr = profile_t.require_find (account.value);
+        check (p_itr->unstaking_balance >= quantity, "Unstaking balance is less than requested.");
 
-        profile_t.modify (profile, contract, [&](auto &p) {
+        profile_t.modify (p_itr, contract, [&](auto &p) {
             p.gft_balance += quantity;
             p.unstaking_balance -= quantity;
         });
     }
 
     void stake (const name& account, const asset& quantity) {
-        Profile profile = load (account);
-        check (profile.gft_balance >= quantity, "Liquid balance is less than quantity unstaking.");
+        auto p_itr = profile_t.require_find (account.value);
+        check (p_itr->gft_balance >= quantity, "Liquid balance is less than quantity unstaking.");
 
-        profile_t.modify (profile, contract, [&](auto &p) {
+        profile_t.modify (p_itr, contract, [&](auto &p) {
             p.gft_balance -= quantity;
             p.staked_balance += quantity;
         });
     }
 
-    void setrank (const name& account, const uint64_t& rank) 
-    {
-        require_auth (contract);
+    // void setrank (const name& account, const uint64_t& rank) 
+    // {
+    //     require_auth (contract);
 
-        auto p_itr = profile_t.find (account.value);
-        check (p_itr != profile_t.end(), "Account to rank does not have a Gyftie profile.");
+    //     auto p_itr = profile_t.find (account.value);
+    //     check (p_itr != profile_t.end(), "Account to rank does not have a Gyftie profile.");
         
-        profile_t.modify (p_itr, contract, [&](auto &p) {
-            p.rank = rank;
-        });
-    }
+    //     profile_t.modify (p_itr, contract, [&](auto &p) {
+    //         p.rank = rank;
+    //     });
+    // }
 
       // ACTION gyftietoken::promoteuser (const name account)
         // {

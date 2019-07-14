@@ -16,10 +16,11 @@ class GyftieClass {
 
    public:
 
-      TABLE AppState 
+      struct [[ eosio::table, eosio::contract("gyftietoken") ]] AppState 
       {
          name        gftorderbook;
          name        gyftiegyftie;
+         name        gyftieoracle;
          uint8_t     paused;
          uint32_t    account_count = 0;
          uint32_t    prior_step_user_count;   
@@ -42,12 +43,13 @@ class GyftieClass {
                : appstate_t (contract, contract.value),
                contract (contract) {}
 
-      void set_config (const name& gftorderbook, const name& gyftiegyftie) {
+      void set_config (const name& gftorderbook, const name& gyftiegyftie, const name& gyftieoracle) {
          require_auth (contract);
 
          AppState state = appstate_t.get_or_create (contract, AppState());
          state.gftorderbook = gftorderbook;
          state.gyftiegyftie = gyftiegyftie;
+         state.gyftieoracle = gyftieoracle;
          state.paused = PAUSED;
          
          ProfileClass pc = ProfileClass (contract);

@@ -25,6 +25,7 @@ class Permit {
     static const int    ANY_SIGNATORY       =   8;
     static const int    AUTH_ACTIVITY       =   9;
     static const int    LOCK_ACTIVITY       =   10;
+    static const int    ORACLE_ACTIVITY     =   11;
 
     TABLE signatory
     {
@@ -88,6 +89,24 @@ class Permit {
 
         static void permit (const name& contract, const name& account, const name& receiver) {
             Activity::permit (contract, account, receiver);      
+            check (account != receiver, "Account cannot challenge itself.");
+            require_auth (account);
+        }
+    };
+
+    class OracleActivity : Activity {
+
+        public: 
+
+        static void permit (const name& contract, const name& gyftieAccount, const name& anyAccount) {
+            Activity::permit (contract, gyftieAccount, gyftieAccount);
+
+            check (is_account(anyAccount), "Account is not a valid EOS account: " + anyAccount.to_string());
+
+            GyftieClass gyftieClass (contract);
+            check (gyftieClass.get_state().gyftieoracle.value > 0, "Gyftie oracle is not set.");
+
+            require_auth (gyftieClass.get_state().gyftieoracle);
         }
     };
 
@@ -174,20 +193,28 @@ class Permit {
                 break;
             case PROPOSE:
                 Activity::permit (contract, account, receiver);
+                break;
             case TRANSFER:
                 Activity::permit (contract, account, receiver);
+                break;
             case GYFT:
                 Activity::permit (contract, account, receiver);
+                break;
             case REMOVE_PROPOSAL:
                 AuthActivity::permit (contract, account);
+                break;
             case ANY_SIGNATORY: 
                 SignatoryActivity::permit (contract);
+                break;
             case AUTH_ACTIVITY: 
                 AuthActivity::permit (contract, account);
+                break;
             case LOCK_ACTIVITY:
                 LockActivity::permit (contract, account);
-
-
+                break;
+            case ORACLE_ACTIVITY:
+                OracleActivity::permit (contract, account, receiver);
+                break;
         }
     }
 };

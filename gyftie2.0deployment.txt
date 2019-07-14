@@ -1,4 +1,12 @@
 
+Gyft can occur without a reward to the gyfter.
+
+How does the gyfting process change? Will we still create accounts, if at all?
+
+What changes need to occur to the existing web app?
+
+How do funds get issued to gyftiegyftie?
+
 Tables:
 - Profile
 

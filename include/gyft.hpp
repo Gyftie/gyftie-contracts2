@@ -16,7 +16,7 @@ class GyftClass {
 
     public:
 
-        TABLE Gyft
+        struct [[ eosio::table, eosio::contract("gyftietoken") ]] Gyft
         {
             uint64_t    gyft_id;
             name        gyfter;
@@ -52,21 +52,22 @@ class GyftClass {
             gyftieClass (contract),
             contract (contract) {}
 
-        auto load (const uint64_t&  gyft_id) {
-            auto g_itr = gyft_t.find (gyft_id);
-            eosio::check (g_itr != gyft_t.end(), "Gyft event is not found.");
-            return *g_itr;
-        }
+        // auto load (const uint64_t&  gyft_id) {
+        //     auto g_itr = gyft_t.find (gyft_id);
+        //     eosio::check (g_itr != gyft_t.end(), "Gyft event is not found.");
+        //     return *g_itr;
+        // }
 
-        iterator<std::bidirectional_iterator_tag, const Gyft> create (const ProfileClass::Profile& gyfter, 
-                                const name& gyftee, 
-                                const asset& gyfter_issue,
-                                const asset& gyftee_issue, 
-                                const string& relationship) {
+        iterator<std::bidirectional_iterator_tag, const Gyft> create (
+            const name& gyfter, 
+            const name& gyftee, 
+            const asset& gyfter_issue,
+            const asset& gyftee_issue, 
+            const string& relationship) {
                         
             return gyft_t.emplace(contract, [&](auto &g) {
                 g.gyft_id       = gyft_t.available_primary_key();
-                g.gyfter        = gyfter.account;
+                g.gyfter        = gyfter;
                 g.gyftee        = gyftee;
                 g.gyfter_issue  = gyfter_issue;
                 g.gyftee_issue  = gyftee_issue;

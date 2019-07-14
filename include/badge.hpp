@@ -26,7 +26,10 @@ class BadgeClass
         string      badge_name      ;
         string      description     =   0;
         asset       reward          = asset { 0, common::S_GFT };
+        string      profile_image   ;
         string      badge_image     ;
+        string      mat_icon_name   ;
+      //  name        issuer          ;
 
         uint64_t    primary_key()   const { return badge_id; }
         uint64_t    by_reward()     const { return reward.amount; }
@@ -66,8 +69,13 @@ class BadgeClass
         badgeaccount_t  (contract, contract.value),
         contract        (contract) {}
     
-    void add_badge (const string& badge_name, const string& description, 
-                    const asset& reward, const string& badge_image) {
+    void add_badge (const string& badge_name, 
+                    const string& description, 
+                    const asset& reward, 
+                    const string& profile_image, 
+                    const string& badge_image,
+                    const string& mat_icon_name,
+                    const name& issuer) {
 
         badge_t.emplace (contract, [&](auto &b) {
             b.badge_id      = badge_t.available_primary_key();
@@ -75,6 +83,7 @@ class BadgeClass
             b.description   = description;
             b.reward        = reward;
             b.badge_image   = badge_image;
+            b.mat_icon_name = mat_icon_name;
         });
     }
 
@@ -85,6 +94,17 @@ class BadgeClass
         auto b_itr = badge_t.find (badge_id);
         check (b_itr != badge_t.end(), "Badge ID does not exist.");
 
+       // DEPLOY
+       // require_auth (b_itr->issuer);
+
+        auto byholder = badgeaccount_t.get_index<"byholder"_n>();
+        auto ba_itr = byholder.lower_bound (badge_recipient.value);
+        while (ba_itr->badge_holder == badge_recipient && ba_itr != byholder.end()) {
+            check (ba_itr->badge_id != badge_id, "Recipient has already received this badge. Recipient: " + 
+                badge_recipient.to_string() + "; Badge ID: " + std::to_string(badge_id));
+            ba_itr++;
+        }
+
         badgeaccount_t.emplace (contract, [&](auto &ba) {
             ba.badgeacct_id     = badgeaccount_t.available_primary_key();
             ba.badge_id         = badge_id;
@@ -93,11 +113,47 @@ class BadgeClass
             ba.reward           = b_itr->reward;
         });
 
-        action (
-            permission_level{contract, "owner"_n},
-            contract, "issuetostake"_n,
-            std::make_tuple(badge_recipient, b_itr->reward, notes))
-        .send();
+        if (b_itr->reward.amount > 0) {
+            action (
+                permission_level{contract, "owner"_n},
+                contract, "issuetostake"_n,
+                std::make_tuple(badge_recipient, b_itr->reward, notes))
+            .send();
+        }
+    }
+
+    // for testing
+    void unreward_badge (const name& badge_recipient,
+                            const uint64_t& badge_id) {
+        auto b_itr = badge_t.find (badge_id);
+        check (b_itr != badge_t.end(), "Badge ID does not exist.");
+
+        // DEPLOY
+        // check (has_auth (contract) || has_auth(b_itr->issuer), 
+        //     "Permission denied. Must have approval from contract or issuer: " + b_itr->issuer.to_string());
+
+        auto byholder = badgeaccount_t.get_index<"byholder"_n>();
+        auto ba_itr = byholder.lower_bound (badge_recipient.value);
+        while (ba_itr->badge_holder == badge_recipient && ba_itr != byholder.end()) {
+            
+            if (ba_itr->badge_id == badge_id) {
+                byholder.erase (ba_itr);
+                return;
+            }
+            ba_itr++;
+        }
+    }
+
+    void reset ()  {
+        auto b_itr = badge_t.begin();
+        while (b_itr != badge_t.end()) {
+            b_itr = badge_t.erase (b_itr);
+        }
+
+        auto ba_itr = badgeaccount_t.begin();
+        while (ba_itr != badgeaccount_t.end()) {
+            ba_itr = badgeaccount_t.erase (ba_itr);
+        }
     }
 };
 

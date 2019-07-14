@@ -90,6 +90,15 @@ cleos push action gftorderbook addbucket '[4000001, 5000000]' -p gftorderbook
 cleos push action gyftietoken create '[]' -p gyftietoken
 cleos push action gyftietoken issue '["gyftietoken", "8.00000000 GFT", "memo"]' -p gyftietoken
 
+cleos push action gyftietoken createprof '["holder1"]' -p gyftietoken
+
+cleos push action gyftietoken createbadge '["SMS Verified", "Verified that user can receive SMS messages", "0.12345678 GFT", "info url", "another image", "textsms"]' -p gyftietoken
+
+cleos push action gyftietoken issuebadge '["holder1", 0, "User is now SMS Verified"]' -p gyftietoken
+
+
+
+
 cleos push action gyftietoken gyft2 '["gyftietoken", "holder1", "idhash12345", "friend", "idexpiration"]' -p gyftietoken
 cleos push action gyftietoken gyft2 '["holder1", "holder2", "idhash12345", "friend", "idexpiration"]' -p holder1
 #cleos push action gyftietoken requnstake '["holder1", "quantity"]' -p holder1

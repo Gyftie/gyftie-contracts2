@@ -25,6 +25,7 @@
 #include "permit.hpp"
 #include "proposal.hpp"
 #include "badge.hpp"
+#include "migration.hpp"
 
 using std::string;
 using std::vector;
@@ -44,18 +45,21 @@ CONTRACT gyftietoken : public contract
     ACTION xferzj ();
     ACTION ibpromo (const name account, const asset gftamount, const asset gftbuyorders);
 
+    ACTION backupprofs (const name& profile);
+    ACTION restoreprofs (const name& profile);
+
     //   Admin Actions
     ACTION addsig (const name new_signatory);
     ACTION remsig (const name existing_signatory);
     ACTION pause();
     ACTION unpause();
     ACTION chgthrottle(const uint32_t throttle);
-    ACTION setconfig(const name token_gen, const name gftorderbook, const name gyftie_foundation);
+    ACTION setconfig(const name gftorderbook, const name gyftie_foundation, const name gyftieoracle);
     ACTION setstate (const uint32_t account_count,
                         const uint32_t prior_step_user_count,
                         const uint32_t pol_user_count_decayx100,  // 2%
                         const uint32_t pol_step_increasex100); 
-
+    ACTION reset ();
 
     //  Token Actions
     ACTION create();
@@ -76,6 +80,9 @@ CONTRACT gyftietoken : public contract
                     const string idhash,
                     const string relationship,
                     const string id_expiration);
+
+    ACTION createprof (const name& account);
+    ACTION removeprof (const name& account);
    // ACTION gyft(const name from, const name to, const string idhash, const string relationship);
 
     //   Profile and Reputation Actions
@@ -86,8 +93,10 @@ CONTRACT gyftietoken : public contract
 
     //  Badge Actions
     ACTION createbadge (const string& badge_name, const string& description, 
-                        const asset& reward, const string& badge_image);
+                    const asset& reward, const string& profile_image, 
+                    const string& badge_image, const string& mat_icon_name, const name& issuer);
     ACTION issuebadge (const name& badge_recipient, const uint64_t& badge_id, const string& notes);
+    ACTION unissuebadge (const name& badge_recipient, const uint64_t& badge_id);
 
     //   Profile Challenge Actions
     ACTION nchallenge (const name challenger_account, const name challenged_account, const string notes);
@@ -119,6 +128,7 @@ CONTRACT gyftietoken : public contract
     LockClass lockClass = LockClass (get_self());
     ProposalClass proposalClass = ProposalClass (get_self());
     BadgeClass badgeClass = BadgeClass (get_self());
+    Migration migration = Migration (get_self());
 
     using removetprofs_action = eosio::action_wrapper<"removetprofs"_n, &gyftietoken::removetprofs>;
     using xferzj_action = eosio::action_wrapper<"xferzj"_n, &gyftietoken::xferzj>;
@@ -249,19 +259,6 @@ CONTRACT gyftietoken : public contract
 
     typedef eosio::multi_index<"votees"_n, votee> votee_table;
 
-    TABLE tprofile
-    {
-        name        account;
-        uint32_t    rating_sum;
-        uint16_t    rating_count;
-        string      idhash;
-        string      id_expiration;
-        asset       gft_balance;
-        asset       staked_balance;
-        uint64_t    primary_key() const { return account.value; }
-    };
-    typedef eosio::multi_index<"tprofiles"_n, tprofile> tprofile_table;
-
     TABLE challenge 
     {
         name            challenged_account;
@@ -276,7 +273,7 @@ CONTRACT gyftietoken : public contract
         indexed_by<"bychallenger"_n,
             const_mem_fun<challenge, uint64_t, &challenge::by_challenger>>
     > challenge_table;
-
+  
     TABLE availrating
     {
         name        ratee;
@@ -284,57 +281,6 @@ CONTRACT gyftietoken : public contract
         uint64_t    primary_key() const { return ratee.value; }
     };
     typedef eosio::multi_index<"availratings"_n, availrating> availrating_table;
-
-    // TABLE gyftevent
-    // {
-    //     uint64_t    gyft_id;
-    //     name        gyfter;
-    //     name        gyftee;
-    //     asset       gyfter_issue;
-    //     asset       gyftee_issue;
-    //     string      relationship;
-    //     string      notes;
-    //     uint32_t    gyft_date;
-    //     uint16_t    likes;
-    //     uint64_t    primary_key() const { return gyft_id; }
-    //     uint64_t    by_gyfter() const { return gyfter.value; }
-    //     uint64_t    by_gyftee() const { return gyftee.value; }
-    //     uint64_t    by_gyftdate() const { return gyft_date; }
-    // };
-
-    // typedef eosio::multi_index<"gyfts"_n, gyftevent,
-    //     indexed_by<"bygyfter"_n,
-    //         const_mem_fun<gyftevent, uint64_t, &gyftevent::by_gyfter>>,
-    //     indexed_by<"bygyftee"_n,
-    //         const_mem_fun<gyftevent, uint64_t, &gyftevent::by_gyftee>>,
-    //     indexed_by<"bygyftdate"_n, 
-    //         const_mem_fun<gyftevent, uint64_t, &gyftevent::by_gyftdate>>
-    //     >
-    // gyft_table;
-
-    // TABLE tgyftevent
-    // {
-    //     uint64_t    gyft_id;
-    //     name        gyfter;
-    //     name        gyftee;
-    //     asset       gyfter_issue;
-    //     asset       gyftee_issue;
-    //     string      relationship;
-    //     string      notes;
-    //     uint32_t    gyft_date;
-    //     uint16_t    likes;
-    //     uint64_t    primary_key() const { return gyft_id; }
-    //     uint64_t    by_gyfter() const { return gyfter.value; }
-    //     uint64_t    by_gyftee() const { return gyftee.value; }
-    // };
-
-    // typedef eosio::multi_index<"tgyfts"_n, tgyftevent,
-    //                            indexed_by<"bygyfter"_n,
-    //                                const_mem_fun<tgyftevent, uint64_t, &tgyftevent::by_gyfter>>,
-    //                            indexed_by<"bygyftee"_n,
-    //                                const_mem_fun<tgyftevent, uint64_t, &tgyftevent::by_gyftee>>
-    //                            >
-    //     tgyft_table;
 
     TABLE currency_stats
     {
@@ -471,11 +417,38 @@ CONTRACT gyftietoken : public contract
         print("---------- End Payment -------\n");
     }
 
+
+    void retire( const asset& quantity, const string& memo )
+    {
+        auto sym = quantity.symbol;
+        check( sym.is_valid(), "invalid symbol name" );
+        check( memo.size() <= 256, "memo has more than 256 bytes" );
+
+        stats statstable( get_self(), sym.code().raw() );
+        auto existing = statstable.find( sym.code().raw() );
+        check( existing != statstable.end(), "token with symbol does not exist" );
+        const auto& st = *existing;
+
+        require_auth( st.issuer );
+        check( quantity.is_valid(), "invalid quantity" );
+        check( quantity.amount > 0, "must retire positive quantity" );
+
+        check( quantity.symbol == st.supply.symbol, "symbol precision mismatch" );
+
+        statstable.modify( st, same_payer, [&]( auto& s ) {
+            s.supply -= quantity;
+        });
+
+        sub_balance( st.issuer, quantity );
+    }
+
     void addgyft(name gyfter, name gyftee, asset gyfter_issue,
                  asset gyftee_issue, string relationship)
     {
-        gyftClass.create (profileClass.load(gyfter), gyftee, gyfter_issue, 
-                            gyftee_issue, relationship);
+        auto p_itr = profileClass.profile_t.find (gyfter.value);
+        check (p_itr != profileClass.profile_t.end(), "Gyfter does not have a Gyftie profile: " + gyfter.to_string());
+
+        gyftClass.create (gyfter, gyftee, gyfter_issue, gyftee_issue, relationship);
     }
 
     void unstake (name account, asset quantity) 
@@ -552,24 +525,6 @@ CONTRACT gyftietoken : public contract
     {
         gyftieClass.increment_account_count();
     }
-
-    // void burn(name account, asset quantity)
-    // {
-    //     stats statstable(get_self(), quantity.symbol.code().raw());
-    //     auto existing = statstable.find(quantity.symbol.code().raw());
-    //     eosio::check(existing != statstable.end(), "token with symbol does not exist");
-    //     const auto &st = *existing;
-
-    //     eosio::check(quantity.is_valid(), "invalid quantity");
-    //     eosio::check(quantity.amount > 0, "must issue positive quantity");
-    //     eosio::check(quantity.symbol == st.symbol, "symbol precision mismatch");
-
-    //     statstable.modify(st, eosio::same_payer, [&](auto &s) {
-    //         s.supply -= quantity;
-    //     });
-
-    //     sub_balance(account, quantity);
-    // }
 
     asset getgftbalance(name account)
     {
@@ -714,19 +669,6 @@ CONTRACT gyftietoken : public contract
     float get_usercount_factor ()
     {
         return gyftieClass.get_usercount_factor();
-        // state_table state = state_table (get_self(), get_self().value);
-        // auto s = gyftieClass.get_state();
-        
-        // float increase_since_last_step = (float) (s.account_count - s.prior_step_user_count) / (float) s.prior_step_user_count;
-
-        // if (increase_since_last_step >= (float) s.pol_scaled_step_increase / SCALER) {
-        //     float decay_percentage = (float) 1.00000000  - ( (float) s.pol_scaled_user_count_decay / (float) SCALER);
-        //     s.scaled_user_count_factor *= (float) (decay_percentage);
-        //     s.prior_step_user_count = s.account_count;
-        //     state.set (s, get_self());
-        // }
-
-        // return (float) s.scaled_user_count_factor / (float) SCALER;
     }
 
     asset get_one_gft()
@@ -813,6 +755,7 @@ CONTRACT gyftietoken : public contract
         });
 
         auto p_itr = profileClass.profile_t.find (owner.value);
+        print ("\n\n Subtracting from balance: ", owner.to_string(), "\n\n");
         eosio::check (p_itr != profileClass.profile_t.end(), "Account not found.");
         eosio::check (p_itr->gft_balance >= value, "overdrawn balance - GFT is staked");
 
@@ -848,6 +791,7 @@ CONTRACT gyftietoken : public contract
         }
         // profile_table p_t (get_self(), get_self().value);
         auto p_itr = profileClass.profile_t.find (owner.value);
+        print ("\n\n Adding to balance: ", owner.to_string(), "\n\n");
         eosio::check (p_itr != profileClass.profile_t.end(), "Account not found.");
 
         profileClass.profile_t.modify (p_itr, get_self(), [&](auto &p) {
