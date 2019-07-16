@@ -119,6 +119,32 @@ class Migration {
             senderid_t.remove();
         }
 
+        void removetprofs (const name account) 
+        {
+            // eosio::check (  has_auth (get_self()) || 
+            //         has_auth ("gftma.x"_n),    
+            //     "Permission denied");
+                
+            // tprofile_table tp_t (get_self(), get_self().value);
+            // auto tp_itr = tp_t.find (account.value);
+            // eosio::check (tp_itr != tp_t.end(), "Account not found");
+
+            // int counter = 0;
+            // while (tp_itr != tp_t.end() && counter <= 25) {
+            //     tp_itr = tp_t.erase (tp_itr);
+            //     counter++;
+            // }
+
+            // if (tp_itr != tp_t.end()) {
+            //     eosio::transaction out{};
+            //     out.actions.emplace_back(permission_level{get_self(), "owner"_n}, 
+            //                             get_self(), "removetprofs"_n, 
+            //                             std::make_tuple(tp_itr->account));
+            //     out.delay_sec = 1;
+            //     out.send(get_next_sender_id(), get_self());    
+            // }
+        }
+
         void backupprofs (const name& profile) {
             uint32_t prof_count = 0;
 

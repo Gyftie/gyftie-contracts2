@@ -33,7 +33,6 @@ ACTION gyftietoken::restoreprofs (const name& profile) {
 // }
 
 ACTION gyftietoken::referuser (const name& referrer, const name& account_to_refer) {
-    //Permit::permit (get_self(), referrer, account_to_refer, Permit::ORACLE_ACTIVITY);
     require_auth (account_to_refer);
     
     profileClass.referred (referrer, account_to_refer);
@@ -67,32 +66,6 @@ ACTION gyftietoken::unissuebadge (const name& badge_recipient, const name& badge
     badgeClass.unreward_badge (badge_recipient, badge_id);
 }
 
-ACTION gyftietoken::removetprofs (const name account) 
-{
-    // eosio::check (  has_auth (get_self()) || 
-    //         has_auth ("gftma.x"_n),    
-    //     "Permission denied");
-        
-    // tprofile_table tp_t (get_self(), get_self().value);
-    // auto tp_itr = tp_t.find (account.value);
-    // eosio::check (tp_itr != tp_t.end(), "Account not found");
-
-    // int counter = 0;
-    // while (tp_itr != tp_t.end() && counter <= 25) {
-    //     tp_itr = tp_t.erase (tp_itr);
-    //     counter++;
-    // }
-
-    // if (tp_itr != tp_t.end()) {
-    //     eosio::transaction out{};
-    //     out.actions.emplace_back(permission_level{get_self(), "owner"_n}, 
-    //                             get_self(), "removetprofs"_n, 
-    //                             std::make_tuple(tp_itr->account));
-    //     out.delay_sec = 1;
-    //     out.send(get_next_sender_id(), get_self());    
-    // }
-}
-
 ACTION gyftietoken::addlocknote (const name account_to_lock, const string note)
 {
     Permit::permit (get_self(), account_to_lock, name{0}, Permit::LOCK_ACTIVITY);
@@ -103,48 +76,12 @@ ACTION gyftietoken::addlockchain (const name account_to_lock, const string note)
 {
     Permit::permit (get_self(), account_to_lock, name{0}, Permit::ANY_SIGNATORY);
     LockChain::lockchain (get_self(), account_to_lock, note);
-
-    // auto gyfter_index = gyftClass.gyft_t.get_index<"bygyfter"_n>();
-    // auto gyfter_itr = gyfter_index.find (account_to_lock.value);
-    // if (gyfter_itr == gyfter_index.end()) {
-    //     return;
-    // }
-
-    // while (gyfter_itr->gyfter == account_to_lock && gyfter_itr != gyfter_index.end()) {
-    //     eosio::transaction out{};
-    //     out.actions.emplace_back(permission_level{get_self(), "owner"_n}, 
-    //                             get_self(), "addlockchain"_n, 
-    //                             std::make_tuple(gyfter_itr->gyftee, note));
-    //     out.delay_sec = 1;
-    //     out.send(get_next_sender_id(), get_self());    
-
-    //     gyfter_itr++;
-    // }
 }
 
 ACTION gyftietoken::unlockchain (const name account_to_unlock, const string note)
 {
     Permit::permit (get_self(), account_to_unlock, name{0}, Permit::ANY_SIGNATORY);
     LockChain::unlockchain (get_self(), account_to_unlock, note);
-    // Permit::permit (get_self(), account_to_unlock, name{0}, Permit::LOCK_ACTIVITY);
-    // lockClass.unlock (account_to_unlock, note);
-
-    // auto gyfter_index = gyftClass.gyft_t.get_index<"bygyfter"_n>();
-    // auto gyfter_itr = gyfter_index.find (account_to_unlock.value);
-    // if (gyfter_itr == gyfter_index.end()) {
-    //     return;
-    // }
-
-    // while (gyfter_itr->gyfter == account_to_unlock && gyfter_itr != gyfter_index.end()) {
-    //     eosio::transaction out{};
-    //     out.actions.emplace_back(permission_level{get_self(), "owner"_n}, 
-    //                             get_self(), "unlockchain"_n, 
-    //                             std::make_tuple(gyfter_itr->gyftee, note));
-    //     out.delay_sec = 1;
-    //     out.send(get_next_sender_id(), get_self());    
-
-    //     gyfter_itr++;
-    // }
 }
 
 ACTION gyftietoken::unlock (const name account_to_unlock, const string note) 
@@ -205,16 +142,6 @@ ACTION gyftietoken::unpause ()
     gyftieClass.unpause ();
 }
 
-ACTION gyftietoken::setstate (const uint32_t account_count,
-                                const uint32_t prior_step_user_count,
-                                const uint32_t pol_user_count_decayx100,  // 2%
-                                const uint32_t pol_step_increasex100)  // 1%
-{
-    gyftieClass.set_state (account_count, prior_step_user_count,
-            pol_user_count_decayx100, pol_step_increasex100);
-}
-
-
 ACTION gyftietoken::nchallenge (const name challenger_account, const name challenged_account, const string note)
 {
     require_auth (challenger_account);
@@ -226,7 +153,10 @@ ACTION gyftietoken::nchallenge (const name challenger_account, const name challe
     eosio::check (is_tokenholder (challenged_account), "Challenged account is not a GFT token holder.");
     eosio::check (! is_paused(), "Contract is paused." );
 
-    asset challenge_stake = adjust_asset (getgftbalance (challenged_account), (float) 0.10000000);
+    accounts acnts(get_self(), challenged_account.value);
+    const auto &ca = acnts.get(common::S_GFT.code().raw(), "no GFT balance object found");
+
+    asset challenge_stake = adjust_asset (ca.balance, (float) 0.10000000);
     stake (challenger_account, challenge_stake);
 
     challenge_table c_t (get_self(), get_self().value);
@@ -348,8 +278,6 @@ ACTION gyftietoken::voteagainst (const name voter,
 
 ACTION gyftietoken::createprof (const name& account) 
 {
-    // AppState state = appstate_t.get_or_create (contract, AppState());
-
     Permit::permit (get_self(), get_self(), account, Permit::ORACLE_ACTIVITY);
     profileClass.create (account);
 }
@@ -375,78 +303,78 @@ ACTION gyftietoken::removeprof (const name& account)
     badgeClass.remove_badges (account);
 }
 
-ACTION gyftietoken::gyft2 (const name from, 
-                            const name to, 
-                            const string idhash,
-                            const string relationship,
-                            const string id_expiration)
-{
-    gyftClass.throttle_check();
-    eosio::check (! is_paused(), "Contract is paused." );
-    Permit::permit (get_self(), from, to, Permit::GYFT);
+// ACTION gyftietoken::gyft2 (const name from, 
+//                             const name to, 
+//                             const string idhash,
+//                             const string relationship,
+//                             const string id_expiration)
+// {
+//     gyftClass.throttle_check();
+//     eosio::check (! is_paused(), "Contract is paused." );
+//     Permit::permit (get_self(), from, to, Permit::GYFT);
 
-    //permit_account(from);
+//     //permit_account(from);
 
-    require_auth (from);
-    // eosio::check (is_tokenholder (from), "Gyfter must be a GFT token holder.");
+//     require_auth (from);
+//     // eosio::check (is_tokenholder (from), "Gyfter must be a GFT token holder.");
 
-    // asset creation_fee = get_one_gft() * 0;
-    // if ( !is_account (to)) {
-    //     creation_fee = create_account_from_request (from, to);
-    // }
+//     // asset creation_fee = get_one_gft() * 0;
+//     // if ( !is_account (to)) {
+//     //     creation_fee = create_account_from_request (from, to);
+//     // }
 
-    eosio::check (!profileClass.exists(to), "Recipient must not be a Gyftie account.");
+//     eosio::check (!profileClass.exists(to), "Recipient must not be a Gyftie account.");
 
-    profileClass.create (to, idhash, id_expiration);
+//     profileClass.create (to, idhash, id_expiration);
     
-    // config_table config (get_self(), get_self().value);
-    // auto c = config.get();
+//     // config_table config (get_self(), get_self().value);
+//     // auto c = config.get();
    
-    asset issue_to_gyfter = get_gyfter_reward(from);
-    asset issue_to_gyftee = get_recipient_reward(); 
+//     asset issue_to_gyfter = get_gyfter_reward(from);
+//     asset issue_to_gyftee = get_recipient_reward(); 
 
-    string to_gyfter_memo { "Vouch-Gyft-Earn GFT-creation to Gyfter. See 'How Gyftie Works' document - ask us for link." };
-    string to_gyftee_memo { "Vouch-Gyft-Earn GFT-creation to new user. See 'How Gyftie Works' document - ask us for link." };
-    string to_gyftiegyftie {"Vouch-Gyft-Earn GFT-creation to Gyftie venture (gyftiegyftie). See 'How Gyftie Works' document - ask us for link."};
-    string auto_liquidity_memo { "Vouch-Gyft-Earn GFT-creation to liquidity providers. See 'How Gyftie Works' document - ask us for link." };
+//     string to_gyfter_memo { "Vouch-Gyft-Earn GFT-creation to Gyfter. See 'How Gyftie Works' document - ask us for link." };
+//     string to_gyftee_memo { "Vouch-Gyft-Earn GFT-creation to new user. See 'How Gyftie Works' document - ask us for link." };
+//     string to_gyftiegyftie {"Vouch-Gyft-Earn GFT-creation to Gyftie venture (gyftiegyftie). See 'How Gyftie Works' document - ask us for link."};
+//     string auto_liquidity_memo { "Vouch-Gyft-Earn GFT-creation to liquidity providers. See 'How Gyftie Works' document - ask us for link." };
  
-    float share_for_liquidity_reward = 0.100000000000;
-    asset gyft_inflation = issue_to_gyfter + issue_to_gyftee;
-    asset amount_to_gyftiegyftie = asset { static_cast<int64_t> (gyft_inflation.amount * (1 - share_for_liquidity_reward)), issue_to_gyfter.symbol };
-    asset liquidity_reward = gyft_inflation - amount_to_gyftiegyftie;
+//     float share_for_liquidity_reward = 0.100000000000;
+//     asset gyft_inflation = issue_to_gyfter + issue_to_gyftee;
+//     asset amount_to_gyftiegyftie = asset { static_cast<int64_t> (gyft_inflation.amount * (1 - share_for_liquidity_reward)), issue_to_gyfter.symbol };
+//     asset liquidity_reward = gyft_inflation - amount_to_gyftiegyftie;
 
-    // action (
-    //     permission_level{get_self(), "owner"_n},
-    //     get_self(), "issuetostake"_n,
-    //     std::make_tuple(from, issue_to_gyfter - creation_fee, to_gyfter_memo))
-    // .send();
+//     // action (
+//     //     permission_level{get_self(), "owner"_n},
+//     //     get_self(), "issuetostake"_n,
+//     //     std::make_tuple(from, issue_to_gyfter - creation_fee, to_gyfter_memo))
+//     // .send();
 
-    action (
-        permission_level{get_self(), "owner"_n},
-        get_self(), "issue"_n,
-        std::make_tuple(gyftieClass.get_state().gyftiegyftie, amount_to_gyftiegyftie, to_gyftiegyftie))
-    .send();
+//     action (
+//         permission_level{get_self(), "owner"_n},
+//         get_self(), "issue"_n,
+//         std::make_tuple(gyftieClass.get_state().gyftiegyftie, amount_to_gyftiegyftie, to_gyftiegyftie))
+//     .send();
 
-    action (
-        permission_level{get_self(), "owner"_n},
-        get_self(), "issue"_n,
-        std::make_tuple(gyftieClass.get_state().gftorderbook, liquidity_reward, auto_liquidity_memo))
-    .send();
+//     action (
+//         permission_level{get_self(), "owner"_n},
+//         get_self(), "issue"_n,
+//         std::make_tuple(gyftieClass.get_state().gftorderbook, liquidity_reward, auto_liquidity_memo))
+//     .send();
 
-    action (
-        permission_level{get_self(), "owner"_n},
-        gyftieClass.get_state().gftorderbook, "addliqreward"_n,
-        std::make_tuple(liquidity_reward))
-    .send();
+//     action (
+//         permission_level{get_self(), "owner"_n},
+//         gyftieClass.get_state().gftorderbook, "addliqreward"_n,
+//         std::make_tuple(liquidity_reward))
+//     .send();
 
-    action (
-        permission_level{get_self(), "owner"_n},
-        get_self(), "issuetostake"_n,
-        std::make_tuple(to, issue_to_gyftee, to_gyftee_memo))
-    .send();
+//     action (
+//         permission_level{get_self(), "owner"_n},
+//         get_self(), "issuetostake"_n,
+//         std::make_tuple(to, issue_to_gyftee, to_gyftee_memo))
+//     .send();
 
-    addgyft (from, to, issue_to_gyfter, issue_to_gyftee, relationship);
-}
+//     addgyft (from, to, issue_to_gyfter, issue_to_gyftee, relationship);
+// }
 
 ACTION gyftietoken::create()
 {

@@ -23,12 +23,6 @@ class GyftieClass {
          name        gyftieoracle;
          uint8_t     paused;
          uint32_t    account_count = 0;
-         uint32_t    prior_step_user_count;   
-
-         uint64_t    pol_scaled_user_count_decay;
-         uint64_t    pol_scaled_step_increase;
-
-         uint64_t    scaled_user_count_factor=100000000;
          uint32_t    throttle = 0;
          uint64_t    last_sender_id;
       };
@@ -50,7 +44,6 @@ class GyftieClass {
          state.gftorderbook = gftorderbook;
          state.gyftiegyftie = gyftiegyftie;
          state.gyftieoracle = gyftieoracle;
-         state.paused = PAUSED;
          
          ProfileClass pc = ProfileClass (contract);
          if (!pc.exists (gftorderbook)) {
@@ -64,18 +57,12 @@ class GyftieClass {
          appstate_t.set (state, contract);
       }
 
-      void set_state (const uint32_t account_count,
-                              const uint32_t prior_step_user_count,
-                              const uint32_t pol_user_count_decayx100,  // 2%
-                              const uint32_t pol_step_increasex100)  // 1%
+      void set_account_count (const uint32_t account_count)  
       {
          require_auth (contract);
 
          AppState state = appstate_t.get_or_create (contract, AppState());
          state.account_count = account_count;
-         state.prior_step_user_count = prior_step_user_count;
-         state.pol_scaled_user_count_decay = pol_user_count_decayx100 * SCALER / 100;
-         state.pol_scaled_step_increase = pol_step_increasex100 * SCALER / 100;
          appstate_t.set(state, contract);
       }
 
@@ -121,21 +108,6 @@ class GyftieClass {
          state.account_count++;
          appstate_t.set (state, contract);
          return state.account_count;
-      }
-
-      float get_usercount_factor () {
-         AppState state = appstate_t.get_or_create (contract, AppState());
-
-         float increase_since_last_step = (float) (state.account_count - state.prior_step_user_count) / (float) state.prior_step_user_count;
-
-         if (increase_since_last_step >= (float) state.pol_scaled_step_increase / SCALER) {
-            float decay_percentage = (float) 1.00000000  - ( (float) state.pol_scaled_user_count_decay / (float) SCALER);
-            state.scaled_user_count_factor *= (float) (decay_percentage);
-            state.prior_step_user_count = state.account_count;
-            appstate_t.set (state, contract);
-         }
-
-         return (float) state.scaled_user_count_factor / (float) SCALER;
       }
 };
 

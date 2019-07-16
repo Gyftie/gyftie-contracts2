@@ -14,8 +14,6 @@
 //#include <eosio/chain/authority.hpp>
 #include <math.h>
 
-#include <abieos_numeric.hpp>
-
 #include "profile.hpp"
 #include "gyft.hpp"
 #include "gyftie.hpp"
@@ -42,22 +40,12 @@ CONTRACT gyftietoken : public contract
     //  TEMPORARY actions needed for deployments
     //  ACTION fixstakes (const name account);
     //  ACTION fixstake (const name account);
-    ACTION removetprofs (const name account);
+    // ACTION removetprofs (const name account);
     ACTION xferzj ();
 
     ACTION backupprofs (const name& profile);
     ACTION restoreprofs (const name& profile);
     
-    //  (const name& badge_id, 
-    //                     const string& badge_name, 
-    //                     const string& description, 
-    //                     const asset& reward, 
-    //                     const string& profile_image, 
-    //                     const string& badge_image, 
-    //                     const string& mat_icon_name, 
-    //                     const name& issuer, 
-    //                     uint8_t badge_type);
-
     //   Admin Actions
     ACTION addsig (const name new_signatory);
     ACTION remsig (const name existing_signatory);
@@ -65,10 +53,7 @@ CONTRACT gyftietoken : public contract
     ACTION unpause();
     ACTION chgthrottle(const uint32_t throttle);
     ACTION setconfig(const name gftorderbook, const name gyftie_foundation, const name gyftieoracle);
-    ACTION setstate (const uint32_t account_count,
-                        const uint32_t prior_step_user_count,
-                        const uint32_t pol_user_count_decayx100,  // 2%
-                        const uint32_t pol_step_increasex100); 
+
     ACTION reset ();
 
     //  Token Actions
@@ -87,11 +72,11 @@ CONTRACT gyftietoken : public contract
 
 
     //  Gyfting Actions
-    ACTION gyft2 (const name from, 
-                    const name to, 
-                    const string idhash,
-                    const string relationship,
-                    const string id_expiration);
+    // ACTION gyft2 (const name from, 
+    //                 const name to, 
+    //                 const string idhash,
+    //                 const string relationship,
+    //                 const string id_expiration);
 
     ACTION createprof (const name& account);
     ACTION removeprof (const name& account);
@@ -150,43 +135,6 @@ CONTRACT gyftietoken : public contract
     BadgeClass badgeClass = BadgeClass (get_self());
     Migration migration = Migration (get_self());
 
-    // using removetprofs_action = eosio::action_wrapper<"removetprofs"_n, &gyftietoken::removetprofs>;
-    // using xferzj_action = eosio::action_wrapper<"xferzj"_n, &gyftietoken::xferzj>;
-    // using addsig_action = eosio::action_wrapper<"addsig"_n, &gyftietoken::addsig>;
-    // using remsig_action = eosio::action_wrapper<"remsig"_n, &gyftietoken::remsig>;
-    // using pause_action = eosio::action_wrapper<"pause"_n, &gyftietoken::pause>;
-    // using unpause_action = eosio::action_wrapper<"unpause"_n, &gyftietoken::unpause>;
-    // using chgthrottle_action = eosio::action_wrapper<"chgthrottle"_n, &gyftietoken::chgthrottle>;
-    // using setconfig_action = eosio::action_wrapper<"setconfig"_n, &gyftietoken::setconfig>;
-    // using setstate_action = eosio::action_wrapper<"setstate"_n, &gyftietoken::setstate>;
-    // using create_action = eosio::action_wrapper<"create"_n, &gyftietoken::create>;
-    // using issue_action = eosio::action_wrapper<"issue"_n, &gyftietoken::issue>;
-    // using issuetostate_action = eosio::action_wrapper<"issuetostake"_n, &gyftietoken::issuetostake>;
-    // using transfer_action = eosio::action_wrapper<"transfer"_n, &gyftietoken::transfer>;
-    // using xfertostake_action = eosio::action_wrapper<"xferstake"_n, &gyftietoken::xfertostake>;
-    // using requnstake_action = eosio::action_wrapper<"requnstake"_n, &gyftietoken::requnstake>;
-    // using unstaked2_action = eosio::action_wrapper<"unstaked2"_n, &gyftietoken::unstaked2>;
-    // using stake_action = eosio::action_wrapper<"stake"_n, &gyftietoken::stake>;
-    // using gyft2_action = eosio::action_wrapper<"gyft2"_n, &gyftietoken::gyft2>;
-    // using setrank_action = eosio::action_wrapper<"setrank"_n, &gyftietoken::setrank>;
-    // using promotuser_action = eosio::action_wrapper<"promoteuser"_n, &gyftietoken::promoteuser>;
-    // using voteforuser_action = eosio::action_wrapper<"voteforuser"_n, &gyftietoken::voteforuser>;
-    // using addrating_action = eosio::action_wrapper<"addrating"_n, &gyftietoken::addrating>;
-    // using nchallenge_action = eosio::action_wrapper<"nchallenge"_n, &gyftietoken::nchallenge>;
-    // using addcnote_action = eosio::action_wrapper<"addcnote"_n, &gyftietoken::addcnote>;
-    // using addlock_action = eosio::action_wrapper<"addlock"_n, &gyftietoken::addlock>;
-    // using addlockchain_action = eosio::action_wrapper<"addlockchain"_n, &gyftietoken::addlockchain>;
-    // using addlocknote_action = eosio::action_wrapper<"addlocknote"_n, &gyftietoken::addlocknote>;
-    // using unlockchain_action = eosio::action_wrapper<"unlockchain"_n, &gyftietoken::unlockchain>;
-    // using unlock_action = eosio::action_wrapper<"unlock"_n, &gyftietoken::unlock>;
-    // using propose_action = eosio::action_wrapper<"propose"_n, &gyftietoken::propose>;
-    // //using promoteprop_action = eosio::action_wrapper<"promoteprop"_n, &gyftietoken::promoteprop>;
-    // using votefor_action = eosio::action_wrapper<"votefor"_n, &gyftietoken::votefor>;
-    // using voteagainst_action = eosio::action_wrapper<"voteagainst"_n, &gyftietoken::voteagainst>;
-    // using unvoteprop_action = eosio::action_wrapper<"unvoteprop"_n, &gyftietoken::unvoteprop>;
-    // using removeprop_action = eosio::action_wrapper<"removeprop"_n, &gyftietoken::removeprop>;
-    // using ibpromo_action = eosio::action_wrapper<"ibpromo"_n, &gyftietoken::ibpromo>;
-
     TABLE Promo 
     {
         uint64_t promo_count = 0;
@@ -194,72 +142,13 @@ CONTRACT gyftietoken : public contract
 
     typedef singleton<"promos"_n, Promo> promo_table;
     typedef eosio::multi_index<"promos"_n, Promo> promo_table_placeholder;
-    // TABLE proposal
-    // {
-    //     uint64_t proposal_id;
-    //     uint32_t created_date;
-    //     name proposer;
-    //     name new_token_gen;
-    //     string notes;
-    //     vector<name> voters_for;
-    //     uint32_t votes_for;
-    //     vector<name> voters_against;
-    //     uint32_t votes_against;
-    //     uint32_t expiration_date;
-    //     // DEPLOY
-    //     uint64_t rank=0;
-    //     uint64_t primary_key() const { return proposal_id; }
-    // };
-
-    // typedef eosio::multi_index<"proposals"_n, proposal> proposal_table;
-
-    // TABLE lock
-    // {
-    //     name            account;
-    //     vector<string>  lock_notes;
-    //     uint64_t    primary_key() const { return account.value; }
-    // };
-    // typedef eosio::multi_index<"locks"_n, lock> lock_table;
-
-    // TABLE signatory
-    // {
-    //     name        account;
-    //     uint64_t    primary_key() const { return account.value; }
-    // };
-    // typedef eosio::multi_index<"signatories"_n, signatory> signatory_table;
-
+  
     TABLE account
     {
         asset balance;
         uint64_t primary_key() const { return balance.symbol.code().raw(); }
     };
     typedef eosio::multi_index<"accounts"_n, account> accounts;
-
-    // TABLE profile
-    // {
-    //     name        account;
-    //     uint32_t    rating_sum;
-    //     uint16_t    rating_count;
-    //     string      idhash;
-    //     string      id_expiration;
-    //     asset       gft_balance;
-    //     asset       staked_balance;
-    //     asset       unstaking_balance; 
-
-    //     // DEPLOY
-    //     vector<name>    promotion_votes;
-    //     uint64_t    rank=0;
-    //     uint64_t    by_rank() const { return rank; }
-
-    //     uint64_t    voter_count;
-    //     uint64_t    scaled_sum_rating;
-    //     uint64_t    primary_key() const { return account.value; }
-    // };
-
-    // typedef eosio::multi_index<"profiles"_n, profile,
-    //     indexed_by<"byrank"_n,
-    //         const_mem_fun<profile, uint64_t, &profile::by_rank>>
-    // > profile_table;
 
     TABLE voter
     {
@@ -357,59 +246,6 @@ CONTRACT gyftietoken : public contract
                                           const_mem_fun<gyftrequest, uint64_t, &gyftrequest::by_gyfter>>>
         gyftrequest_table;
 
-    struct key_weight
-    {
-        eosio::public_key key;
-        uint16_t weight;
-    };
-
-    struct permission_level_weight
-    {
-        permission_level permission;
-        uint16_t weight;
-    };
-
-    struct wait_weight
-    {
-        uint32_t wait_sec;
-        uint16_t weight;
-    };
-
-    struct authority
-    {
-        uint32_t threshold;
-        std::vector<key_weight> keys;
-        std::vector<permission_level_weight> accounts;
-        std::vector<wait_weight> waits;
-    };
-
-    authority keystring_authority(string key_str)
-    {
-        // Convert string to key type
-        const abieos::public_key key = abieos::string_to_public_key(key_str);
-
-        // Setup authority
-        authority ret_authority;
-
-        // Array to hold public key
-        std::array<char, 33> key_char;
-
-        // Copy key to char array
-        std::copy(key.data.begin(), key.data.end(), key_char.begin());
-
-        key_weight kweight{
-            .key = {(uint8_t)abieos::key_type::k1, key_char},
-            .weight = (uint16_t)1};
-
-        // Authority
-        ret_authority.threshold = 1;
-        ret_authority.keys = {kweight};
-        ret_authority.accounts = {};
-        ret_authority.waits = {};
-
-        return ret_authority;
-    }
-
     uint64_t get_next_sender_id()
     {
         return gyftieClass.get_next_sender_id();
@@ -462,18 +298,13 @@ CONTRACT gyftietoken : public contract
         sub_balance( st.issuer, quantity );
     }
 
-    void addgyft(name gyfter, name gyftee, asset gyfter_issue,
-                 asset gyftee_issue, string relationship)
-    {
-        auto p_itr = profileClass.profile_t.find (gyfter.value);
-        check (p_itr != profileClass.profile_t.end(), "Gyfter does not have a Gyftie profile: " + gyfter.to_string());
-
-        gyftClass.create (gyfter, gyftee, gyfter_issue, gyftee_issue, relationship);
-    }
-
-    // void accelunstake (name account) 
+    // void addgyft(name gyfter, name gyftee, asset gyfter_issue,
+    //              asset gyftee_issue, string relationship)
     // {
-    //     profileClass.accelunstake (account);
+    //     auto p_itr = profileClass.profile_t.find (gyfter.value);
+    //     check (p_itr != profileClass.profile_t.end(), "Gyfter does not have a Gyftie profile: " + gyfter.to_string());
+
+    //     gyftClass.create (gyfter, gyftee, gyfter_issue, gyftee_issue, relationship);
     // }
 
     void unstake (name account, asset quantity) 
@@ -485,42 +316,6 @@ CONTRACT gyftietoken : public contract
     {
         return asset{static_cast<int64_t>(original_asset.amount * adjustment), original_asset.symbol};
     }
-
-    // void permit_account (name account)
-    // {
-    //     // eosio::check ( profileClass.exists (account), "Account is not a GFT token holder.");
-
-    //     // lock_table l_t (get_self(), get_self().value);
-    //     // auto l_itr = l_t.find(account.value);
-    //     // eosio::check (l_itr == l_t.end(), "Account has been locked out of Gyftie activities."); 
-
-    //     // challenge_table c_t (get_self(), get_self().value);
-    //     // auto c_itr = c_t.find(account.value);
-
-    //     // if (c_itr != c_t.end()) {
-    //     //     eosio::check (c_itr->challenged_time <= current_block_time().to_time_point().sec_since_epoch() + 60 * 60 * 24 * 7, "Account is locked until it is re-validated.");
-    //     // }       
-    // }
-
-    // void permit_validator (name validator, name challenged_account) 
-    // {
-    //     // gyft_table g_t (get_self(), get_self().value);
-    //     // auto gyfter_index = g_t.get_index<"bygyfter"_n>();
-    //     // auto gyfter_itr = gyfter_index.find(validator.value);
-
-    //     // while (gyfter_itr != gyfter_index.end() && gyfter_itr->gyfter == validator) {
-    //     //     eosio::check (gyfter_itr->gyftee != challenged_account, "Validator cannot validate an account they gyfted.");
-    //     //     gyfter_itr++;
-    //     // }
-
-    //     // auto gyftee_index = g_t.get_index<"bygyftee"_n>();
-    //     // auto gyftee_itr = gyftee_index.find(validator.value);
-
-    //     // while (gyftee_itr != gyftee_index.end() && gyftee_itr->gyftee == validator) {
-    //     //     eosio::check (gyftee_itr->gyfter != challenged_account, "Validator cannot validate their gyfter.");
-    //     //     gyftee_itr++;
-    //     // }
-    // }
 
     bool is_tokenholder(name account)
     {
@@ -551,204 +346,11 @@ CONTRACT gyftietoken : public contract
         gyftieClass.increment_account_count();
     }
 
-    asset getgftbalance(name account)
-    {
-        // symbol sym = symbol{symbol_code(GYFTIE_SYM_STR.c_str()), GYFTIE_PRECISION};
-        asset gft_balance = asset{0, S_GFT};
-
-        // profile_table p_t (get_self(), get_self().value);
-        // auto p_itr = p_t.find (account.value);
-        // if (p_itr != p_t.end()) {
-        //     gft_balance += p_itr->gft_balance;
-        //     gft_balance += p_itr->staked_balance;
-        // }
-
-        // // config_table config(get_self(), get_self().value);
-        // // auto c = config.get();
-
-        // balance_table b_t(gyftieClass.get_state().gftorderbook, account.value);
-        // auto b_itr = b_t.find(S_GFT.code().raw());
-        // if (b_itr != b_t.end() && b_itr->token_contract == get_self())
-        // {
-        //     gft_balance += b_itr->funds;
-        // }
-
-        return gft_balance;
-    }
-
-    asset create_account_from_request(name gyfter, name recipient)
-    {
-        gyftrequest_table g_t("gyftmultisig"_n, "gyftmultisig"_n.value);
-        auto g_itr = g_t.find(recipient.value);
-        eosio::check(g_itr != g_t.end(), "No gyft request matching this recipient.");
-        eosio::check (g_itr->gyfter == gyfter, "Gyft request does not match this gyfter.");
-
-        // New account resources
-        asset ram = asset(1700, S_EOS); // 0.3
-        asset cpu = asset(900, S_EOS);  // 0.09
-        asset net = asset(100, S_EOS);  // 0.01
-
-        authority owner_auth = keystring_authority(g_itr->owner_public_key);
-        authority active_auth = keystring_authority(g_itr->active_public_key);
-
-        // Create account
-        action(
-            permission_level{get_self(), name("owner")},
-            name("eosio"), name("newaccount"),
-            std::make_tuple(get_self(), recipient, owner_auth, active_auth))
-            .send();
-
-        // Buy ram
-        action(
-            permission_level{get_self(), name("owner")},
-            name("eosio"), name("buyram"),
-            std::make_tuple(get_self(), recipient, ram))
-            .send();
-
-        // Delegate CPU/NET
-        action(
-            permission_level{get_self(), name("owner")},
-            name("eosio"), name("delegatebw"),
-            std::make_tuple(get_self(), recipient, net, cpu, 1))
-            .send();
-
-        asset reimbursement = get_market_gft_requirement (ram + cpu + net);
-        eosio::check (reimbursement <= get_gyfter_reward(gyfter), "Cost of creating account is not covered by Gyft reward.");
-
-        string market_sell_for_reimbursement { "Market Sell for Account Creation Reimbursement"};
-
-        // config_table config(get_self(), get_self().value);
-        // auto c = config.get();
-
-        action (
-            permission_level{get_self(), "owner"_n},
-            get_self(), "issue"_n,
-            std::make_tuple(gyftieClass.get_state().gftorderbook, reimbursement, market_sell_for_reimbursement))
-        .send();
-
-        action (
-            permission_level{get_self(), "owner"_n},
-            gyftieClass.get_state().gftorderbook, "marketsell"_n,
-            std::make_tuple(get_self(), reimbursement))
-        .send();   
-
-        action (
-            permission_level{get_self(), "owner"_n},
-            "gyftmultisig"_n, "remrequest"_n,
-            std::make_tuple(recipient))
-        .send();   
-
-        return reimbursement;
-    }
-
     asset get_gft_amount(asset price_per_gft, asset eos_amount)
     {
         //symbol gft_symbol = symbol{symbol_code(GYFTIE_SYM_STR.c_str()), GYFTIE_PRECISION};
         float gft_quantity = pow(10, S_GFT.precision()) * eos_amount.amount / price_per_gft.amount;
         return asset{static_cast<int64_t>(gft_quantity), S_GFT};
-    }
-
-    asset get_market_gft_requirement(asset eos_amount)
-    {
-        // config_table config(get_self(), get_self().value);
-        // auto c = config.get();
-        name gftorderbook = gyftieClass.get_state().gftorderbook;
-
-        buyorder_table b_t(gftorderbook, gftorderbook.value);
-        auto b_index = b_t.get_index<"byprice"_n>();
-        auto b_itr = b_index.rbegin();
-
-        eos_amount = adjust_asset(eos_amount, 1.01); // account for trade fees
-        asset gft_requirement = asset{0, S_GFT};
-
-        while (eos_amount.amount > 0 && b_itr != b_index.rend())
-        {
-            asset trade_amount_eos = asset{std::min(b_itr->order_value.amount, eos_amount.amount), eos_amount.symbol};
-            asset trade_amount_gft = get_gft_amount(b_itr->price_per_gft, trade_amount_eos);
-            gft_requirement += trade_amount_gft;
-            eos_amount -= trade_amount_eos;
-            b_itr++;
-        }
-        return gft_requirement;
-    }
-
-    asset get_replenish_minimum_eos_req(name account)
-    {
-        asset minimum_eos = asset{10100, symbol{"EOS", 4}};
-        asset eos_needed = minimum_eos * 0;
-
-        accounts eos_a_t("eosio.token"_n, account.value);
-        auto eos_a_itr = eos_a_t.find(minimum_eos.symbol.code().raw());
-        if (eos_a_itr == eos_a_t.end())
-        {
-            eos_needed = minimum_eos;
-        }
-        else
-        {
-            eos_needed = asset{std::max((int64_t)minimum_eos.amount - eos_a_itr->balance.amount, (int64_t)0), minimum_eos.symbol};
-        }
-
-        return get_market_gft_requirement(eos_needed);
-    }
-
-    float get_usercount_factor ()
-    {
-        return gyftieClass.get_usercount_factor();
-    }
-
-    asset get_one_gft()
-    {
-        //symbol gft_symbol = symbol{symbol_code(GYFTIE_SYM_STR.c_str()), GYFTIE_PRECISION};
-        return asset { static_cast<int64_t>(pow(10, S_GFT.precision())), S_GFT};
-    }
-
-    asset get_recipient_reward ()
-    {
-        return adjust_asset (get_one_gft(), get_usercount_factor());
-    }
-
-    asset get_gyfter_reward (name gyfter)
-    {
-        asset one_gyftie_token = get_one_gft();
-        asset gyfter_gft_balance = getgftbalance (gyfter);
-
-        asset gyft_benefit_amount = one_gyftie_token;
-        float usercount_factor = get_usercount_factor();
-
-        // print (" Gyfter GFT Balance: ", gyfter_gft_balance, "\n");
-        // print (" user count factor: ", std::to_string(usercount_factor), "\n");
-
-        asset adjusted_one_gft = adjust_asset (one_gyftie_token, usercount_factor);
-        // print (" Adjusted 1 GFT: ", adjusted_one_gft, "\n");
-
-        if (gyfter_gft_balance  <= (adjusted_one_gft * 3)) {
-            gyft_benefit_amount = adjusted_one_gft * 3;
-        } else if (gyfter_gft_balance  <= (adjusted_one_gft * 10 )) {
-            gyft_benefit_amount = adjusted_one_gft * 4;
-        } else if (gyfter_gft_balance  <= (adjusted_one_gft * 20)) {
-            gyft_benefit_amount = adjusted_one_gft * 5;
-        } else if (gyfter_gft_balance  <= (adjusted_one_gft * 50)) {
-            gyft_benefit_amount = adjusted_one_gft * 6;
-        } else if (gyfter_gft_balance  <= (adjusted_one_gft * 100)) {
-            gyft_benefit_amount = adjusted_one_gft * 7;
-        } else if (gyfter_gft_balance  <= (adjusted_one_gft * 200)) {
-            gyft_benefit_amount = adjusted_one_gft * 8;
-        } else if (gyfter_gft_balance  <= (adjusted_one_gft * 500)) {
-            gyft_benefit_amount = adjusted_one_gft * 9;
-        } else if (gyfter_gft_balance  <= (adjusted_one_gft * 1000)) {
-            gyft_benefit_amount = adjusted_one_gft * 10;
-        } else if (gyfter_gft_balance  <= (adjusted_one_gft * 2000)) {
-            gyft_benefit_amount = adjusted_one_gft * 11;
-        } else if (gyfter_gft_balance  <= (adjusted_one_gft * 5000)) {
-            gyft_benefit_amount = adjusted_one_gft * 12;
-        } else if (gyfter_gft_balance  <= (adjusted_one_gft * 10000)) {
-            gyft_benefit_amount = adjusted_one_gft * 15;
-        } else {
-            gyft_benefit_amount = adjusted_one_gft * 20;
-        }
-
-        // print (" Benefit amount: ", gyft_benefit_amount, "\n" );
-        return gyft_benefit_amount;
     }
 
     void defer_unstake (const name user, const asset quantity, const uint32_t delay) 
