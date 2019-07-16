@@ -170,6 +170,16 @@ class ProfileClass
       });
     }
 
+    void accelunstake (const name& account) {
+        auto p_itr = profile_t.require_find (account.value);
+
+        profile_t.modify (p_itr, contract, [&](auto &p) {
+            p.gft_balance += p_itr->unstaking_balance + p_itr->staked_balance;
+            p.unstaking_balance *= 0;
+            p.staked_balance *= 0;
+        });
+    }
+
     void unstake (const name& account, const asset& quantity) {
 
         auto p_itr = profile_t.require_find (account.value);
@@ -189,6 +199,34 @@ class ProfileClass
             p.gft_balance -= quantity;
             p.staked_balance += quantity;
         });
+    }
+
+    void removeprof (const name& account) {
+      auto p_itr = profile_t.require_find (account.value);
+      profile_t.erase (p_itr);
+
+      auto verified_index = verify_t.get_index<"byverified"_n>();
+      auto v_itr = verified_index.lower_bound (account.value);
+      while (v_itr->verified == account && v_itr != verified_index.end()) {
+        v_itr = verified_index.erase (v_itr);
+      }
+
+      auto verifier_index = verify_t.get_index<"byverifier"_n>();
+      auto v_itr2 = verifier_index.lower_bound (account.value);
+      while (v_itr2->verifier == account && v_itr2 != verifier_index.end()) {
+        v_itr2 = verifier_index.erase (v_itr2);
+      }
+
+      auto r_itr = referral_t.find (account.value);
+      if (r_itr != referral_t.end()) {
+        referral_t.erase (r_itr);
+      }
+
+      auto referrer_index = referral_t.get_index<"byreferrer"_n>();
+      auto r_itr2 = referrer_index.find (account.value);
+      while (r_itr2->referrer == account && r_itr2 != referrer_index.end()) {
+        r_itr2 = referrer_index.erase (r_itr2);
+      } 
     }
 
     // void setrank (const name& account, const uint64_t& rank) 

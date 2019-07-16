@@ -1,0 +1,33 @@
+{
+  "expiration": "2019-07-17T13:01:26",
+  "ref_block_num": 35834,
+  "ref_block_prefix": 2122039683,
+  "max_net_usage_words": 0,
+  "max_cpu_usage_ms": 0,
+  "delay_sec": 0,
+  "context_free_actions": [],
+  "actions": [{
+      "account": "gyftietokens",
+      "name": "pause",
+      "authorization": [{
+          "actor": "gyftietokens",
+          "permission": "active"
+        }
+      ],
+      "data": ""
+    },
+    {
+      "account": "gftorderbook",
+      "name": "pause",
+      "authorization": [{
+          "actor": "gftorderbook",
+          "permission": "active"
+        }
+      ],
+      "data": ""
+    }
+  ],
+  "transaction_extensions": [],
+  "signatures": [],
+  "context_free_data": []
+}

@@ -65,8 +65,8 @@ cleos push action gftorderbook unpause '[]' -p gftorderbook
 cleos push action gftorderbook setstate '["5.0000 EOS"]' -p gftorderbook
 cleos push action gftorderbook setrewconfig '[750000, 250000]' -p gftorderbook
 
-cleos push action eosio.token transfer '["holder1", "gftorderbook", "10000.0000 EOS", "should succeed"]' -p holder1
-cleos push action eosio.token transfer '["holder2", "gftorderbook", "10000.0000 EOS", "should succeed"]' -p holder2
+cleos push action eosio.token transfer '["holder1", "gftorderboo2", "10000.0000 EOS", "should succeed"]' -p holder1
+cleos push action eosio.token transfer '["holder2", "gftorderboo2", "10000.0000 EOS", "should succeed"]' -p holder2
 cleos push action eosio.token transfer '["holder3", "gftorderbook", "10000.0000 EOS", "should succeed"]' -p holder3
 cleos push action eosio.token transfer '["holder4", "gftorderbook", "10000.0000 EOS", "should succeed"]' -p holder4
 

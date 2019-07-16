@@ -280,7 +280,7 @@ describe("Gyftie Testing", function() {
         '1.50000000 GFT', 'info url', 'another image', 'icon name', gyftieOracle.name, 1, { from: gyftieTokenAccount });
 
     await gyftieTokenContract.issuebadge (member2.name, 'identified', 'Legit identity badge', { from: gyftieOracle })
-    await gyftieTokenContract.referuser (member2.name, member3.name);
+    await gyftieTokenContract.referuser (member2.name, member3.name, { from: member3 });
     await gyftieTokenContract.issuebadge (member3.name, 'identype', 'Identity type badge', { from: gyftieOracle })
 
     const member2Gft = await getGftBalances(member2)
@@ -297,7 +297,25 @@ describe("Gyftie Testing", function() {
 
     await gyftieTokenContract.createprof (member4.name, { from: gyftieOracle});
 
-    await gyftieTokenContract.referuser (member2.name, member4.name);
+    await gyftieTokenContract.referuser (member2.name, member4.name, { from: member4 });
+    await gyftieTokenContract.issuebadge (member4.name, 'identype', 'Identity type badge', { from: gyftieOracle })
+
+    const member2Gft = await getGftBalances(member2)
+    const member4Gft = await getGftBalances(member4)
+
+    console.log (" Member 2 GFT: ", member2Gft);
+    console.log (" Member 4 GFT: ", member4Gft);
+
+    assert.equal ("6.30000000 GFT", member2Gft);
+    assert.equal ("1.20000000 GFT", member4Gft);
+  });
+
+
+  it('Should transfer ', async () => {
+
+    await gyftieTokenContract.createprof (member4.name, { from: gyftieOracle});
+
+    await gyftieTokenContract.referuser (member2.name, member4.name, { from: member4 });
     await gyftieTokenContract.issuebadge (member4.name, 'identype', 'Identity type badge', { from: gyftieOracle })
 
     const member2Gft = await getGftBalances(member2)

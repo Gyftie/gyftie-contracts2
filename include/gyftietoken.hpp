@@ -85,6 +85,7 @@ CONTRACT gyftietoken : public contract
     ACTION verifyuser (const name& verifier, const name& account_to_verify);
     ACTION referuser (const name& referrer, const name& account_to_refer);
 
+
     //  Gyfting Actions
     ACTION gyft2 (const name from, 
                     const name to, 
@@ -94,6 +95,7 @@ CONTRACT gyftietoken : public contract
 
     ACTION createprof (const name& account);
     ACTION removeprof (const name& account);
+    ACTION accelunstake (const name& account);
    // ACTION gyft(const name from, const name to, const string idhash, const string relationship);
 
     //   Profile and Reputation Actions
@@ -468,6 +470,11 @@ CONTRACT gyftietoken : public contract
 
         gyftClass.create (gyfter, gyftee, gyfter_issue, gyftee_issue, relationship);
     }
+
+    // void accelunstake (name account) 
+    // {
+    //     profileClass.accelunstake (account);
+    // }
 
     void unstake (name account, asset quantity) 
     {

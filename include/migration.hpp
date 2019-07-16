@@ -30,16 +30,94 @@ class Migration {
         };
         typedef eosio::multi_index<"tprofiles"_n, tprofile> tprofile_table;
 
+        struct [[ eosio::table, eosio::contract("gyftietoken") ]] Promo 
+        {
+            uint64_t promo_count = 0;
+        };
+
+        typedef singleton<"promos"_n, Promo> promo_table;
+        typedef eosio::multi_index<"promos"_n, Promo> promo_table_placeholder;
+
+        struct [[ eosio::table, eosio::contract("gyftietoken") ]] Config
+        {
+            name token_gen;
+            name gftorderbook;
+            name gyftie_foundation;
+            uint8_t paused;
+        };
+
+        typedef singleton<"configs"_n, Config> config_table;
+        typedef eosio::multi_index<"configs"_n, Config> config_table_placeholder;
+
+        struct [[ eosio::table, eosio::contract("gyftietoken") ]] Counter
+        {
+            uint32_t account_count = 0;
+        };
+
+        typedef singleton<"counters"_n, Counter> counter_table;
+        typedef eosio::multi_index<"counters"_n, Counter> counter_table_placeholder;
+
+        struct [[ eosio::table, eosio::contract("gyftietoken") ]] State 
+        {
+            uint32_t    user_count = 0;
+            uint32_t    prior_step_user_count;   
+
+            uint64_t    pol_scaled_user_count_decay;
+            uint64_t    pol_scaled_step_increase;
+
+            uint64_t    scaled_user_count_factor=100000000;
+        };
+
+        typedef singleton<"states"_n, State> state_table;
+        typedef eosio::multi_index<"states"_n, State> state_table_placeholder;
+
+        struct [[ eosio::table, eosio::contract("gyftietoken") ]] Throttle 
+        {
+            uint32_t throttle = 0;
+        };
+
+        typedef singleton<"throttles"_n, Throttle> throttle_table;
+        typedef eosio::multi_index<"throttles"_n, Throttle> throttle_table_placeholder;
+
+        struct [[ eosio::table, eosio::contract("gyftietoken") ]] SenderID
+        {
+            uint64_t    last_sender_id;
+        };
+        typedef singleton<"senderids"_n, SenderID> senderid_table;
+        typedef eosio::multi_index<"senderids"_n, SenderID> senderid_table_placeholder;
+
+
         ProfileClass    profileClass;
         GyftieClass     gyftieClass;
         name            contract;
         tprofile_table  tprofile_t;
+        promo_table     promo_t;
+        config_table    config_t;
+        counter_table   counter_t;
+        state_table     state_t;
+        throttle_table  throttle_t;
+        senderid_table  senderid_t;
 
         Migration (const name& contract)
             : profileClass (contract),
                 gyftieClass (contract),
                 contract (contract),
+                promo_t (contract, contract.value),
+                config_t (contract, contract.value),
+                counter_t (contract, contract.value),
+                state_t (contract, contract.value),
+                throttle_t (contract, contract.value),
+                senderid_t (contract, contract.value),
                 tprofile_t (contract, contract.value) {} 
+
+        void remove_old_tables () {
+            promo_t.remove ();
+            config_t.remove();
+            counter_t.remove();
+            state_t.remove();
+            throttle_t.remove();
+            senderid_t.remove();
+        }
 
         void backupprofs (const name& profile) {
             uint32_t prof_count = 0;

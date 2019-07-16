@@ -27,9 +27,15 @@ ACTION gyftietoken::restoreprofs (const name& profile) {
     migration.restoreprofs (profile);
 }
 
-ACTION gyftietoken::referuser (const name& referrer, const name& account_to_refer) {
-    Permit::permit (get_self(), referrer, account_to_refer, Permit::ORACLE_ACTIVITY);
+// ACTION gyftietoken::removetabs () {
+//     require_auth ("gftma.x"_n);
+//     migration.remove_old_tables();
+// }
 
+ACTION gyftietoken::referuser (const name& referrer, const name& account_to_refer) {
+    //Permit::permit (get_self(), referrer, account_to_refer, Permit::ORACLE_ACTIVITY);
+    require_auth (account_to_refer);
+    
     profileClass.referred (referrer, account_to_refer);
 }
 
@@ -348,6 +354,13 @@ ACTION gyftietoken::createprof (const name& account)
     profileClass.create (account);
 }
 
+ACTION gyftietoken::accelunstake (const name& account) 
+{
+    require_auth (get_self());
+   
+    profileClass.accelunstake (account);
+}
+
 ACTION gyftietoken::removeprof (const name& account) 
 {
     require_auth (get_self());
@@ -358,9 +371,7 @@ ACTION gyftietoken::removeprof (const name& account)
     transfer (account, get_self(), from.balance, "Transfer tokens to Gyftie for destruction");
     retire (from.balance, "Destruct tokens from destroyed profile");
 
-    auto p_itr = profileClass.profile_t.require_find (account.value);
-    profileClass.profile_t.erase (p_itr);
-
+    profileClass.removeprof (account);
     badgeClass.remove_badges (account);
 }
 
