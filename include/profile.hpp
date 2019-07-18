@@ -147,6 +147,7 @@ class ProfileClass
       verify_t.emplace (contract, [&](auto &v) {
         v.verifier = verifier;
         v.verified = account_to_verify;
+        v.verification_date = current_block_time().to_time_point().sec_since_epoch();
       });
     }
 

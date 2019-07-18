@@ -27,7 +27,7 @@ class Permit {
     static const int    LOCK_ACTIVITY       =   10;
     static const int    ORACLE_ACTIVITY     =   11;
 
-    TABLE signatory
+    struct [[ eosio::table, eosio::contract("gyftietoken") ]] signatory
     {
         name        account;
         uint64_t    primary_key() const { return account.value; }

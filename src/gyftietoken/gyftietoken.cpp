@@ -27,11 +27,6 @@ ACTION gyftietoken::restoreprofs (const name& profile) {
     migration.restoreprofs (profile);
 }
 
-// ACTION gyftietoken::removetabs () {
-//     require_auth ("gftma.x"_n);
-//     migration.remove_old_tables();
-// }
-
 ACTION gyftietoken::referuser (const name& referrer, const name& account_to_refer) {
     require_auth (account_to_refer);
     
@@ -127,10 +122,14 @@ ACTION gyftietoken::reset ()
 {
     require_auth (get_self());
     gyftieClass.appstate_t.remove ();
-    promo_table promo_t(get_self(), get_self().value);
-    promo_t.remove();
     badgeClass.reset();
 }
+
+
+ACTION gyftietoken::setusercnt (const uint32_t count) {
+    gyftieClass.setusercnt (count);
+}
+
 
 ACTION gyftietoken::pause () 
 {
@@ -206,7 +205,7 @@ ACTION gyftietoken::validate (const name validator, const name account, const st
     eosio::check (! is_paused(), "Contract is paused." );
 
     auto p_itr = profileClass.profile_t.find (account.value);
-    eosio::check (p_itr != profileClass.profile_t.end(), "Account not found.");
+    eosio::check (p_itr != profileClass.profile_t.end(), "In validate action, Account not found in profile table: " + account.to_string());
 
     eosio::check (p_itr->idhash.compare(idhash) == 0, "ID hash provided does not match records. Account not validated.");
       
@@ -284,22 +283,36 @@ ACTION gyftietoken::createprof (const name& account)
 
 ACTION gyftietoken::accelunstake (const name& account) 
 {
-    require_auth (get_self());
-   
+    check (has_auth (get_self()) || has_auth ("gftma.x"_n), "Permission denied. Cannot accelerate unstake");
     profileClass.accelunstake (account);
 }
 
 ACTION gyftietoken::removeprof (const name& account) 
 {
-    require_auth (get_self());
+    // Permit::permit (get_self(), account, name{0}, Permit::ANY_SIGNATORY);
+    check (has_auth (get_self()) || has_auth ("gftma.x"_n), "Permission denied. Cannot accelerate unstake");
 
     accounts from_acnts(get_self(), account.value);
     const auto &from = from_acnts.get(common::S_GFT.code().raw(), "no GFT balance object found");
 
-    transfer (account, get_self(), from.balance, "Transfer tokens to Gyftie for destruction");
-    retire (from.balance, "Destruct tokens from destroyed profile");
+    if (from.balance.amount > 0) {
+        string memo = string { "Transfer tokens to Gyftie for destruction" };
+        action (
+            permission_level{get_self(), "owner"_n},
+            get_self(), "transfer"_n,
+            std::make_tuple(account, get_self(), from.balance, memo))
+        .send();
 
+        string memo2 = string { "Destruct tokens from destroyed profile" };
+        action (
+            permission_level{get_self(), "owner"_n},
+            get_self(), "retire"_n,
+            std::make_tuple(from.balance, memo2))
+        .send();
+    }
+    
     profileClass.removeprof (account);
+    gyftieClass.decrement_account_count();
     badgeClass.remove_badges (account);
 }
 

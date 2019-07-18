@@ -73,6 +73,13 @@ class GyftieClass {
          appstate_t.set(state, contract);
       }
 
+      void setusercnt (const uint32_t& count) {
+
+         AppState state = appstate_t.get_or_create (contract, AppState());
+         state.account_count = count;
+         appstate_t.set(state, contract);
+      }
+
       AppState get_state () {
          return appstate_t.get_or_create (contract, AppState());  
       }
@@ -103,9 +110,15 @@ class GyftieClass {
       }
 
       uint64_t increment_account_count() {
-         require_auth (contract);
          AppState state = appstate_t.get_or_create (contract, AppState());
          state.account_count++;
+         appstate_t.set (state, contract);
+         return state.account_count;
+      }
+
+      uint64_t decrement_account_count() {
+         AppState state = appstate_t.get_or_create (contract, AppState());
+         state.account_count--;
          appstate_t.set (state, contract);
          return state.account_count;
       }

@@ -10,3 +10,4 @@ gyftie_project-prefix
 **/*.wasm
 .DS_Store
 tests/node_modules
+*.json

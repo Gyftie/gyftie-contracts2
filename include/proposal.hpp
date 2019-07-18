@@ -18,6 +18,7 @@ class ProposalClass {
             uint64_t        proposal_id;
             uint32_t        created_date;
             name            proposer;
+            name            new_token_gen;
             string          notes;
             vector<name>    voters_for;
             uint32_t        votes_for;

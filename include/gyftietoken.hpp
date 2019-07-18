@@ -53,6 +53,7 @@ CONTRACT gyftietoken : public contract
     ACTION unpause();
     ACTION chgthrottle(const uint32_t throttle);
     ACTION setconfig(const name gftorderbook, const name gyftie_foundation, const name gyftieoracle);
+    ACTION setusercnt (const uint32_t count);
 
     ACTION reset ();
 
@@ -135,14 +136,6 @@ CONTRACT gyftietoken : public contract
     BadgeClass badgeClass = BadgeClass (get_self());
     Migration migration = Migration (get_self());
 
-    TABLE Promo 
-    {
-        uint64_t promo_count = 0;
-    };
-
-    typedef singleton<"promos"_n, Promo> promo_table;
-    typedef eosio::multi_index<"promos"_n, Promo> promo_table_placeholder;
-  
     TABLE account
     {
         asset balance;
@@ -229,22 +222,6 @@ CONTRACT gyftietoken : public contract
                                indexed_by<"byprice"_n,
                                           const_mem_fun<buyorder, uint64_t, &buyorder::by_price>>>
         buyorder_table;
-
-    TABLE gyftrequest
-    {
-        name recipient;
-        name gyfter;
-        string owner_public_key;
-        string active_public_key;
-        uint32_t requested_date;
-        uint64_t primary_key() const { return recipient.value; }
-        uint64_t by_gyfter() const { return gyfter.value; }
-    };
-
-    typedef eosio::multi_index<"gyftrequests"_n, gyftrequest,
-                               indexed_by<"bygyfter"_n,
-                                          const_mem_fun<gyftrequest, uint64_t, &gyftrequest::by_gyfter>>>
-        gyftrequest_table;
 
     uint64_t get_next_sender_id()
     {
@@ -382,8 +359,7 @@ CONTRACT gyftietoken : public contract
         });
 
         auto p_itr = profileClass.profile_t.find (owner.value);
-        print ("\n\n Subtracting from balance: ", owner.to_string(), "\n\n");
-        eosio::check (p_itr != profileClass.profile_t.end(), "Account not found.");
+        eosio::check (p_itr != profileClass.profile_t.end(), "Cannot subtract from balance. Gyftie profile not found: " + owner.to_string());
         eosio::check (p_itr->gft_balance >= value, "overdrawn balance - GFT is staked");
 
         profileClass.profile_t.modify (p_itr, get_self(), [&](auto &p) {
@@ -418,8 +394,7 @@ CONTRACT gyftietoken : public contract
         }
         // profile_table p_t (get_self(), get_self().value);
         auto p_itr = profileClass.profile_t.find (owner.value);
-        print ("\n\n Adding to balance: ", owner.to_string(), "\n\n");
-        eosio::check (p_itr != profileClass.profile_t.end(), "Account not found.");
+        eosio::check (p_itr != profileClass.profile_t.end(), "Cannot add to balance. Gyftie profile not found: " + owner.to_string());
 
         profileClass.profile_t.modify (p_itr, get_self(), [&](auto &p) {
             p.gft_balance += value;

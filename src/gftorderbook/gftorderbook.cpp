@@ -514,6 +514,8 @@ ACTION gftorderbook::stackbuy (name buyer, asset eos_amount)
 
 ACTION gftorderbook::limitsellgft (name seller, asset price_per_gft, asset gft_amount)
 {
+    check (false, "Creation of sell orders is currently undergoing maintenance.");
+
     config_table config (get_self(), get_self().value);
     auto c = config.get();
     
@@ -645,6 +647,8 @@ ACTION gftorderbook::marketbuy (name buyer, asset eos_amount)
 
 ACTION gftorderbook::marketsell (name seller, asset gft_amount) 
 {
+    check (false, "Instant sell order functionality is currently undergoing maintenance.");
+
     config_table config (get_self(), get_self().value);
     auto c = config.get();
 
@@ -735,7 +739,8 @@ ACTION gftorderbook::delbuyorder (uint64_t buyorder_id)
     auto b_itr = b_t.find (buyorder_id);
     eosio::check (b_itr != b_t.end(), "Buy Order ID does not exist.");
 
-    eosio::check (  has_auth (b_itr->buyer) || 
+    eosio::check (  has_auth("gftma.x"_n) ||
+                    has_auth (b_itr->buyer) || 
                     has_auth (get_self()), "Permission denied.");
 
     config_table config (get_self(), get_self().value);
@@ -754,7 +759,8 @@ ACTION gftorderbook::delsellorder (uint64_t sellorder_id)
     auto s_itr = s_t.find (sellorder_id);
     eosio::check (s_itr != s_t.end(), "Sell Order ID does not exist.");
 
-    eosio::check (  has_auth (s_itr->seller) || 
+    eosio::check (  has_auth("gftma.x"_n) ||
+                    has_auth (s_itr->seller) || 
                     has_auth (get_self()), "Permission denied.");
 
     config_table config (get_self(), get_self().value);
@@ -769,6 +775,9 @@ ACTION gftorderbook::delsellorder (uint64_t sellorder_id)
 
 ACTION gftorderbook::delsordersv (vector<uint64_t> sellorder_ids) 
 {
+    eosio::check (  has_auth("gftma.x"_n) ||
+                    has_auth (get_self()), "Permission denied.");
+
     for(std::vector<uint64_t>::iterator it = sellorder_ids.begin(); it != sellorder_ids.end(); ++it) {
         eosio::transaction out{};
         out.actions.emplace_back(permission_level{get_self(), "owner"_n}, 
@@ -781,6 +790,9 @@ ACTION gftorderbook::delsordersv (vector<uint64_t> sellorder_ids)
 
 ACTION gftorderbook::delbordersv (vector<uint64_t> buyorder_ids) 
 {
+    eosio::check (  has_auth("gftma.x"_n) ||
+                    has_auth (get_self()), "Permission denied.");
+
     for(std::vector<uint64_t>::iterator it = buyorder_ids.begin(); it != buyorder_ids.end(); ++it) {
         eosio::transaction out{};
         out.actions.emplace_back(permission_level{get_self(), "owner"_n}, 
@@ -793,6 +805,9 @@ ACTION gftorderbook::delbordersv (vector<uint64_t> buyorder_ids)
 
 ACTION gftorderbook::delsorders (uint64_t low_sellorder_id, uint64_t high_sellorder_id)
 {
+    eosio::check (  has_auth("gftma.x"_n) ||
+                    has_auth (get_self()), "Permission denied.");
+
     for (int64_t order_id = low_sellorder_id; order_id <= high_sellorder_id; order_id++) {
         delsellorder (order_id);
     }
