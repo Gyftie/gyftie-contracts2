@@ -12,7 +12,7 @@ const GFTORDERBOOK_ABI = "../gyftie/gftorderbook/gftorderbook.abi";
 
 let gyftieTokenContract, eosTokenContract, gftOrderBookContract, gyftieOracle;
 let gyftieTokenAccount, eosTokenAccount, gftOrderBookAccount;
-let member1, member2, member3, member4, member5, gyftiegyftie;
+let member1, member2, member3, member4, member5, member6, member7, member8, member9, member10, gyftiegyftie;
 
 async function assetToFloat(assetStr, precision) {
     if (typeof precision === "undefined") {
@@ -28,7 +28,17 @@ async function assetToFloat(assetStr, precision) {
     ).toFixed(precision);
   }
 
-async function getGftBalances(member) {
+async function getGftSupply () {
+  const stat = await gyftieTokenContract.provider.eos.getTableRows({
+    code: gyftieTokenAccount.name,
+    scope: "GFT",
+    table: "stat",
+    json: true
+  });
+  return stat.rows[0].supply;
+}
+
+async function getGftBalance (member) {
 
     const balances = await gyftieTokenContract.provider.eos.getTableRows({
         code: gyftieTokenAccount.name,
@@ -39,6 +49,8 @@ async function getGftBalances(member) {
         json: true
     });
 
+    const totalGft = await addGft(balances.rows[0].gft_balance, await addGft(balances.rows[0].staked_balance, balances.rows[0].unstaking_balance));
+
     const accounts = await gyftieTokenContract.provider.eos.getTableRows({
         code: gyftieTokenAccount.name,
         scope: member.name,
@@ -47,12 +59,31 @@ async function getGftBalances(member) {
     });
 
     if (accounts.rows[0] === undefined) {
-        assert.equal(balances.rows[0].gft_balance, "0.00000000 GFT");
+        assert.equal(totalGft, "0.00000000 GFT");
         return balances.rows[0].gft_balance;
     }
-    assert.equal (balances.rows[0].gft_balance, accounts.rows[0].balance);
+    assert.equal (totalGft, accounts.rows[0].balance);
     return accounts.rows[0].balance;
 }
+
+async function getProfile (member) {
+  const profiles = await gyftieTokenContract.provider.eos.getTableRows({
+    code: gyftieTokenAccount.name,
+    scope: gyftieTokenAccount.name,
+    table: "profiles",
+    lower_bound: member.name,
+    limit: 1,
+    json: true
+  });
+  return profiles.rows[0];
+}
+
+async function getStakedGft (member) {
+  const profile = await getProfile (member);
+  return profile.staked_balance;
+}
+
+
 
 async function addGft (gft1, gft2) {
     // console.log ('typeof gft1: ', typeof gft1)
@@ -64,7 +95,7 @@ async function addGft (gft1, gft2) {
     // console.log ('gftFloat2         :    ', gftFloat2);
     // console.log ('typeof gftFloat2  :', typeof gftFloat2);
 
-    const sumGft = parseFloat(gftFloat1) + parseFloat(gftFloat2) + ' GFT'
+    const sumGft = parseFloat(parseFloat(gftFloat1) + parseFloat(gftFloat2)).toFixed(8) + ' GFT'
     // console.log ('Sum GFT: ', sumGft);
     return sumGft;
 }
@@ -75,7 +106,7 @@ describe("Gyftie Testing", function() {
   let accounts;
 
   before(async () => {
-    accounts = await eoslime.Account.createRandoms(10);
+    accounts = await eoslime.Account.createRandoms(20);
     gyftieTokenAccount = accounts[0];
     eosTokenAccount = accounts[1];
     gyftiegyftie = accounts[2];
@@ -86,6 +117,11 @@ describe("Gyftie Testing", function() {
     gftOrderBookAccount = accounts[7];
     gyftieOracle = accounts[8];
     member5 = accounts[9];
+    member6 = accounts[10];
+    member7 = accounts[11];
+    member8 = accounts[12];
+    member9 = accounts[13];
+    member10 = accounts [14];
 
     console.log(" Gyftie Account        : ", gyftieTokenAccount.name);
     console.log(" EOS Token Account     : ", eosTokenAccount.name);
@@ -97,7 +133,12 @@ describe("Gyftie Testing", function() {
     console.log(" Member 3              : ", member3.name);
     console.log(" Member 4              : ", member4.name);
     console.log(" Member 5              : ", member5.name);
-
+    console.log(" Member 6              : ", member6.name);
+    console.log(" Member 7              : ", member7.name);
+    console.log(" Member 8              : ", member8.name);
+    console.log(" Member 9              : ", member9.name);
+    console.log(" Member 10             : ", member10.name);
+    
     await gyftieTokenAccount.addPermission(
         gyftieTokenAccount.name,
       "active",
@@ -134,7 +175,7 @@ describe("Gyftie Testing", function() {
     );
 
     await gyftieTokenContract.setconfig(gftOrderBookAccount.name, gyftiegyftie.name, gyftieOracle.name, {from: gyftieTokenAccount });
-    await gyftieTokenContract.setstate(222, 222, 2, 1, {from: gyftieTokenAccount });
+    //await gyftieTokenContract.setstate(222, 222, 2, 1, {from: gyftieTokenAccount });
     await gyftieTokenContract.unpause({from: gyftieTokenAccount });
 
     await gftOrderBookContract.setconfig(gyftieTokenAccount.name, eosTokenAccount.name, "EOS", 4, {from: gyftieTokenAccount.name})
@@ -195,6 +236,9 @@ describe("Gyftie Testing", function() {
 
   it("Should create and assign a badge", async () => {
 
+    // await gyftieTokenContract.issuetostake (member1.name, '1.00000000 GFT', 'First issue of a badge in automated test.', { from: gyftieTokenAccount })
+
+
     await gyftieTokenContract.createbadge ('badgeid1', 
                 'Badge Name #1', 
                 'First badge created using test case',
@@ -212,14 +256,21 @@ describe("Gyftie Testing", function() {
         table: "badges",
         json: true
     });
+    console.log (badges)
 
     assert.equal(badges.rows.length, 1);
 
-    const beforeBalance = await getGftBalances (member1)
+    let member1Profile = await getProfile(member1);
+    console.log(typeof member1Profile);
+    console.log(member1Profile);
+    console.log("member 1 staked balance: ", member1Profile.staked_balance);
+    const beforeBalance = member1Profile.staked_balance;
     console.log('Before Balance: ', beforeBalance);
     console.log('Expected GFT Balance, post reward: ', await addGft(beforeBalance, badges.rows[0].reward))
 
+    // await getProfile(member1)
     await gyftieTokenContract.issuebadge (member1.name, 'badgeid1', 'First issue of a badge in automated test.', { from: gyftieOracle })
+    // await printProfile(member1);
 
     const badgeaccts = await gyftieTokenContract.provider.eos.getTableRows({
         code: gyftieTokenAccount.name,
@@ -227,13 +278,37 @@ describe("Gyftie Testing", function() {
         table: "badgeaccts",
         json: true
     });
-    const afterBalance = await getGftBalances (member1);
+    member1Profile = await getProfile(member1);
+    const afterBalance = member1Profile.staked_balance;
     console.log('After balance: ', afterBalance)
 
     assert.equal(badgeaccts.rows.length, 1);
     assert.equal(badgeaccts.rows[0].badge_holder, member1.name);
 
     assert.equal(await addGft(beforeBalance, badges.rows[0].reward), afterBalance);
+  });
+
+  it('Should accelerate unstake', async () => {
+
+    const beforeStake = await getStakedGft(member1);
+    console.log(beforeStake);
+
+    await gyftieTokenContract.accelunstake (member1.name, { from: gyftieTokenAccount });
+    const afterStake = await getStakedGft(member1);
+    console.log ("After Stake: ", afterStake);
+    assert.equal (afterStake, '0.00000000 GFT');
+
+    const beforeBalance = await getGftBalance(member1);
+    console.log ("Before balance, member: ", beforeBalance);
+    const beforeSupply = await getGftSupply();
+    console.log("Before retire supply: ", beforeSupply);
+
+    await gyftieTokenContract.remprofprep (member1.name, { from: gyftieTokenAccount });
+
+    const afterSupply = await getGftSupply();
+    console.log("After retire supply: ", afterSupply);
+
+    assert.equal(afterSupply, await addGft(beforeSupply, "-" + beforeBalance));
   });
 
   it('Should create a new profile, add badge, then remove profile', async () => {
@@ -244,34 +319,25 @@ describe("Gyftie Testing", function() {
 
     await gyftieTokenContract.issuebadge (member2.name, 'badgeid2', 'Second badge for create/remove testing.', { from: gyftieOracle })
 
-    const beforeTotalGft = await gyftieTokenContract.provider.eos.getTableRows({
-        code: gyftieTokenAccount.name,
-        scope: "GFT",
-        table: "stat",
-        json: true
-    });
-    console.log (" Before GFT Supply: ", beforeTotalGft.rows[0].supply);
-    const beforeMember2Bals = await getGftBalances(member2)
+    const beforeTotalGft = await getGftSupply();
+    console.log (" Before GFT Supply: ", beforeTotalGft);
+    const beforeMember2Bals = await getGftBalance(member2)
     console.log (" Destroying profile for : ", member2.name, "; balance of: ", beforeMember2Bals);
 
+    await gyftieTokenContract.accelunstake (member2.name, { from: gyftieTokenAccount });
+    await gyftieTokenContract.remprofprep (member2.name, { from: gyftieTokenAccount });
     await gyftieTokenContract.removeprof (member2.name, { from: gyftieTokenAccount });
 
-    const afterTotalGft = await gyftieTokenContract.provider.eos.getTableRows({
-        code: gyftieTokenAccount.name,
-        scope: "GFT",
-        table: "stat",
-        json: true
-    });
+    const afterTotalGft = await getGftSupply();
+    console.log (" After GFT Supply: ", afterTotalGft);
 
-    console.log (" After GFT Supply: ", afterTotalGft.rows[0].supply);
-
-    assert.equal (await addGft(afterTotalGft.rows[0].supply, beforeMember2Bals), beforeTotalGft.rows[0].supply);
+    assert.equal (await addGft(afterTotalGft, beforeMember2Bals), beforeTotalGft);
   });
 
   it('Should create a new identity badge, add referral, and issue badge', async () => {
 
-    await gyftieTokenContract.createprof (member2.name, { from: gyftieOracle});
-    await gyftieTokenContract.createprof (member3.name, { from: gyftieOracle});
+    await gyftieTokenContract.createprof (member6.name, { from: gyftieOracle});
+    await gyftieTokenContract.createprof (member7.name, { from: gyftieOracle});
 
     await gyftieTokenContract.createbadge ('identype', 'Identity Type Badge', 'Second Badge',
         '1.20000000 GFT', 'info url', 'another image', 'icon name', gyftieOracle.name, 1, { from: gyftieTokenAccount });
@@ -279,53 +345,58 @@ describe("Gyftie Testing", function() {
     await gyftieTokenContract.createbadge ('identified', 'Identified Badge', 'Second Badge',
         '1.50000000 GFT', 'info url', 'another image', 'icon name', gyftieOracle.name, 1, { from: gyftieTokenAccount });
 
-    await gyftieTokenContract.issuebadge (member2.name, 'identified', 'Legit identity badge', { from: gyftieOracle })
-    await gyftieTokenContract.referuser (member2.name, member3.name, { from: member3 });
-    await gyftieTokenContract.issuebadge (member3.name, 'identype', 'Identity type badge', { from: gyftieOracle })
+    await gyftieTokenContract.issuebadge (member6.name, 'identified', 'Legit identity badge', { from: gyftieOracle })
+    await gyftieTokenContract.referuser (member6.name, member7.name, { from: member7 });
+    await gyftieTokenContract.issuebadge (member7.name, 'identype', 'Identity type badge', { from: gyftieOracle })
 
-    const member2Gft = await getGftBalances(member2)
-    const member3Gft = await getGftBalances(member3)
+    const member6Gft = await getGftBalance(member6)
+    const member7Gft = await getGftBalance(member7)
 
-    console.log (" Member 2 GFT: ", member2Gft);
-    console.log (" Member 3 GFT: ", member3Gft);
+    console.log (" Member 6 GFT: ", member6Gft);
+    console.log (" Member 7 GFT: ", member7Gft);
 
-    assert.equal ("3.90000000 GFT", member2Gft);
-    assert.equal ("1.20000000 GFT", member3Gft);
+    assert.equal ("3.90000000 GFT", member6Gft);
+    assert.equal ("1.20000000 GFT", member7Gft);
   });
 
   it('Should create a new identity badge, add referral from unverified user, and issue badge', async () => {
 
-    await gyftieTokenContract.createprof (member4.name, { from: gyftieOracle});
+    await gyftieTokenContract.createprof (member8.name, { from: gyftieOracle});
+    await gyftieTokenContract.createprof (member9.name, { from: gyftieOracle});
 
-    await gyftieTokenContract.referuser (member2.name, member4.name, { from: member4 });
-    await gyftieTokenContract.issuebadge (member4.name, 'identype', 'Identity type badge', { from: gyftieOracle })
+    const beforeMember8Gft = await getGftBalance (member8);
+    const beforeMember9Gft = await getGftBalance (member9);
 
-    const member2Gft = await getGftBalances(member2)
-    const member4Gft = await getGftBalances(member4)
+    await gyftieTokenContract.referuser (member8.name, member9.name, { from: member9 });
+    await gyftieTokenContract.issuebadge (member9.name, 'identype', 'Identity type badge', { from: gyftieOracle })
 
-    console.log (" Member 2 GFT: ", member2Gft);
-    console.log (" Member 4 GFT: ", member4Gft);
+    const member8Gft = await getGftBalance(member8)
+    const member9Gft = await getGftBalance(member9)
 
-    assert.equal ("6.30000000 GFT", member2Gft);
-    assert.equal ("1.20000000 GFT", member4Gft);
+    console.log (" Member 8 GFT: ", member8Gft);
+    console.log (" Member 9 GFT: ", member9Gft);
+
+    assert.equal (member8Gft, await addGft(beforeMember8Gft, "1.20000000 GFT"));
+    assert.equal (member9Gft, await addGft(beforeMember9Gft, "1.20000000 GFT"));
   });
 
+  it('Should remove a profile ', async () => {
 
-  it('Should transfer ', async () => {
+    await gyftieTokenContract.accelunstake (member9.name, { from: gyftieTokenAccount});
+    await gyftieTokenContract.remprofprep (member9.name, { from: gyftieTokenAccount});
+    await gyftieTokenContract.removeprof (member9.name, { from: gyftieTokenAccount});
 
-    await gyftieTokenContract.createprof (member4.name, { from: gyftieOracle});
+    const profiles = await gyftieTokenContract.provider.eos.getTableRows({
+      code: gyftieTokenAccount.name,
+      scope: gyftieTokenAccount.name,
+      table: "profiles",
+      lower_bound: member9.name,
+      limit: 1,
+      json: true
+    });
+    console.log(profiles);
 
-    await gyftieTokenContract.referuser (member2.name, member4.name, { from: member4 });
-    await gyftieTokenContract.issuebadge (member4.name, 'identype', 'Identity type badge', { from: gyftieOracle })
-
-    const member2Gft = await getGftBalances(member2)
-    const member4Gft = await getGftBalances(member4)
-
-    console.log (" Member 2 GFT: ", member2Gft);
-    console.log (" Member 4 GFT: ", member4Gft);
-
-    assert.equal ("6.30000000 GFT", member2Gft);
-    assert.equal ("1.20000000 GFT", member4Gft);
+    assert.notEqual(profiles.rows[0].account, member9.name);
   });
 
 });

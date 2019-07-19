@@ -55,6 +55,7 @@ ACTION gyftietoken::createbadge (const name& badge_id,
 ACTION gyftietoken::issuebadge (const name& badge_recipient, const name& badge_id, const string& notes) {
 
     badgeClass.reward_badge(badge_recipient, badge_id, notes);
+    print (" Finalized rewarding badge.\n");
 }
 
 ACTION gyftietoken::unissuebadge (const name& badge_recipient, const name& badge_id) {
@@ -129,7 +130,6 @@ ACTION gyftietoken::reset ()
 ACTION gyftietoken::setusercnt (const uint32_t count) {
     gyftieClass.setusercnt (count);
 }
-
 
 ACTION gyftietoken::pause () 
 {
@@ -283,14 +283,22 @@ ACTION gyftietoken::createprof (const name& account)
 
 ACTION gyftietoken::accelunstake (const name& account) 
 {
-    check (has_auth (get_self()) || has_auth ("gftma.x"_n), "Permission denied. Cannot accelerate unstake");
+    // accelerate unstake 
+    check (has_auth (get_self()) || has_auth ("gftma.x"_n), "Permission denied. Cannot accelerate unstake.");
     profileClass.accelunstake (account);
 }
 
-ACTION gyftietoken::removeprof (const name& account) 
+ACTION gyftietoken::remprofprep (const name& account) 
 {
+    // Ensure profile exists
+    // Transfer tokens from account to gyftietokens account
+    // Destruct (retire) tokens from circulation
+
     // Permit::permit (get_self(), account, name{0}, Permit::ANY_SIGNATORY);
-    check (has_auth (get_self()) || has_auth ("gftma.x"_n), "Permission denied. Cannot accelerate unstake");
+    check (has_auth (get_self()) || has_auth ("gftma.x"_n), "Permission denied. Cannot prepare to remove profile.");
+
+    auto p_itr = profileClass.profile_t.find (account.value);
+    check (p_itr != profileClass.profile_t.end(), "Gyftie profile not found: " + account.to_string());
 
     accounts from_acnts(get_self(), account.value);
     const auto &from = from_acnts.get(common::S_GFT.code().raw(), "no GFT balance object found");
@@ -304,16 +312,28 @@ ACTION gyftietoken::removeprof (const name& account)
         .send();
 
         string memo2 = string { "Destruct tokens from destroyed profile" };
-        action (
-            permission_level{get_self(), "owner"_n},
-            get_self(), "retire"_n,
-            std::make_tuple(from.balance, memo2))
-        .send();
+        retire (from.balance, memo2);
+
+        // string memo2 = string { "Destruct tokens from destroyed profile" };
+        // action (
+        //     permission_level{get_self(), "owner"_n},
+        //     get_self(), "retire"_n,
+        //     std::make_tuple(from.balance, memo2))
+        // .send();
     }
     
-    profileClass.removeprof (account);
+    //profileClass.removeprof (account);
     gyftieClass.decrement_account_count();
     badgeClass.remove_badges (account);
+}
+
+ACTION gyftietoken::removeprof (const name& account) {
+    
+    check (has_auth (get_self()) || has_auth ("gftma.x"_n), "Permission denied. Cannot prepare to remove profile.");
+    auto p_itr = profileClass.profile_t.find (account.value);
+    check (p_itr != profileClass.profile_t.end(), "Gyftie profile not found: " + account.to_string());
+
+    profileClass.removeprof (account);
 }
 
 // ACTION gyftietoken::gyft2 (const name from, 
@@ -468,24 +488,36 @@ ACTION gyftietoken::xfertostake(const name from, const name to, const asset quan
 {
     transfer (from, to, quantity, memo);
 
-    eosio::transaction out{};
-    out.actions.emplace_back(permission_level{get_self(), "owner"_n}, 
-        get_self(), "stake"_n, 
-        std::make_tuple(to, quantity));
-    out.delay_sec = 1;
-    out.send(get_next_sender_id(), get_self());    
+    action (
+        permission_level{get_self(), "owner"_n},
+        get_self(), "stake"_n,
+        std::make_tuple(to, quantity))
+    .send();
+
+    // eosio::transaction out{};
+    // out.actions.emplace_back(permission_level{get_self(), "owner"_n}, 
+    //     get_self(), "stake"_n, 
+    //     std::make_tuple(to, quantity));
+    // out.delay_sec = 1;
+    // out.send(get_next_sender_id(), get_self());    
 }
 
 ACTION gyftietoken::issuetostake (const name to, const asset quantity, const string memo)
 {
     issue (to, quantity, memo);
 
-    eosio::transaction out{};
-    out.actions.emplace_back(permission_level{get_self(), "owner"_n}, 
-        get_self(), "stake"_n, 
-        std::make_tuple(to, quantity));
-    out.delay_sec = 1;
-    out.send(get_next_sender_id(), get_self());    
+    action (
+        permission_level{get_self(), "owner"_n},
+        get_self(), "stake"_n,
+        std::make_tuple(to, quantity))
+    .send();
+
+    // eosio::transaction out{};
+    // out.actions.emplace_back(permission_level{get_self(), "owner"_n}, 
+    //     get_self(), "stake"_n, 
+    //     std::make_tuple(to, quantity));
+    // out.delay_sec = 1;
+    // out.send(get_next_sender_id(), get_self());    
 }
 
 ACTION gyftietoken::unstaked2 (const name user, const asset quantity) 

@@ -193,6 +193,8 @@ class ProfileClass
     }
 
     void stake (const name& account, const asset& quantity) {
+        print (" Staking ", quantity.to_string(), " for user ", account.to_string(), "\n");
+        
         auto p_itr = profile_t.require_find (account.value);
         check (p_itr->gft_balance >= quantity, "Liquid balance is less than quantity unstaking.");
 

@@ -71,7 +71,6 @@ CONTRACT gyftietoken : public contract
     ACTION verifyuser (const name& verifier, const name& account_to_verify);
     ACTION referuser (const name& referrer, const name& account_to_refer);
 
-
     //  Gyfting Actions
     // ACTION gyft2 (const name from, 
     //                 const name to, 
@@ -80,8 +79,13 @@ CONTRACT gyftietoken : public contract
     //                 const string id_expiration);
 
     ACTION createprof (const name& account);
-    ACTION removeprof (const name& account);
+
+    // Profile removal / clean up procedures
+    // Steps: 1) accelunstake, 2) remprofprep, 3) removeprof
     ACTION accelunstake (const name& account);
+    ACTION remprofprep (const name& account);
+    ACTION removeprof (const name& account);
+
    // ACTION gyft(const name from, const name to, const string idhash, const string relationship);
 
     //   Profile and Reputation Actions
@@ -358,8 +362,19 @@ CONTRACT gyftietoken : public contract
             a.balance -= value;
         });
 
+        auto p_begin = profileClass.profile_t.begin();
+        // auto p_second = p_begin++;
+        // auto p_nearend = profileClass.profile_t.end()--;
         auto p_itr = profileClass.profile_t.find (owner.value);
-        eosio::check (p_itr != profileClass.profile_t.end(), "Cannot subtract from balance. Gyftie profile not found: " + owner.to_string());
+
+         eosio::check (p_itr != profileClass.profile_t.end(), "Cannot subtract " + value.to_string() + 
+            " from balance. Gyftie profile not found: " + owner.to_string() + ". First account in list is: " + 
+            p_begin->account.to_string());
+
+        // eosio::check (p_itr != profileClass.profile_t.end(), "Cannot subtract " + value.to_string() + 
+        //     " from balance. Gyftie profile not found: " + owner.to_string() + ". First account in list is: " + 
+        //     p_begin->account.to_string() + ", second is " + p_second->account.to_string() + ", Near end is: " + p_nearend->account.to_string());
+
         eosio::check (p_itr->gft_balance >= value, "overdrawn balance - GFT is staked");
 
         profileClass.profile_t.modify (p_itr, get_self(), [&](auto &p) {

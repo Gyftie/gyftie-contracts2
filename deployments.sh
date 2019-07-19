@@ -1,7 +1,13 @@
 cleos -u https://eos.greymass.com set contract -sjd -x 186400 gyftietokens gyftie/gyftietoken/ > gyftietoken_deploy.json
 cleos -u https://eos.greymass.com multisig propose_trx redeploy '[{"actor": "gftma.x", "permission": "active"}, {"actor": "amandarachel", "permission": "active"}]' ./gyftietoken_deploy.json gftma.x
-cleos -u https://eos.greymass.com  push action gyftmultisig addproposal '["gftma.x", "amandarachel", "redeploy", "Update user counts and decrement when removing fraud profiles", "https://github.com/gyftie/gyftie-contracts2/commit/9b8e05cb8533f7a2c93fd758f8f4bacababcea2e"]' -p gftma.x
+cleos -u https://eos.greymass.com  push action gyftmultisig addproposal '["gftma.x", "amandarachel", "redeploy", "Improved error handling for debugging profile cleanup", "https://github.com/gyftie/gyftie-contracts2/commit/7c6215fb023e0aa7fa64bfc63f30d0948186472b"]' -p gftma.x
 cleos -u https://eos.greymass.com multisig approve gftma.x redeploy '{"actor": "gftma.x", "permission": "active"}' -p gftma.x
+
+cleos -u https://eos.greymass.com set contract -sjd -x 186400 gyftietokens gyftie/gyftietoken/ > gyftietoken_deploy.json
+cleos -u https://eos.greymass.com multisig propose_trx redeploy '[{"actor": "gftma.x", "permission": "active"}, {"actor": "danielflora3", "permission": "active"}]' ./gyftietoken_deploy.json gftma.x
+cleos -u https://eos.greymass.com  push action gyftmultisig addproposal '["gftma.x", "danielflora3", "redeploy", "Improved error handling for debugging profile cleanup", "https://github.com/gyftie/gyftie-contracts2/commit/7c6215fb023e0aa7fa64bfc63f30d0948186472b"]' -p gftma.x
+cleos -u https://eos.greymass.com multisig approve gftma.x redeploy '{"actor": "gftma.x", "permission": "active"}' -p gftma.x
+
 
 cleos -u https://eos.greymass.com set contract -sjd -x 186400 gftorderbook gyftie/gftorderbook/ > gftorderbook_deploy.json
 cleos -u https://eos.greymass.com multisig propose_trx redeploy '[{"actor": "gftma.x", "permission": "active"}, {"actor": "amandarachel", "permission": "active"}]' ./gftorderbook_deploy.json gftma.x
@@ -25,8 +31,9 @@ cleos -u https://eos.greymass.com push action gyftietokens createbadge '["identi
 
 cleos -u https://eos.greymass.com push action gyftietokens issuebadge '["gftma.x", "verifysms", "User is now SMS Verified"]' -p gyftieoracle
 
-
-cleos -u https://eos.greymass.com push action gyftietokens removeprof '["digiscarcity"]' -p gftma.x
+cleos -u https://eos.greymass.com push action gyftietokens accelunstake '["purposebuilt"]' -p gftma.x
+cleos -u https://eos.greymass.com push action gyftietokens remprofprep '["purposebuilt"]' -p gftma.x
+cleos -u https://eos.greymass.com push action gyftietokens removeprof '["purposebuilt"]' -p gftma.x
 
 
 "supply": "9684.65713013 GFT",
@@ -38,3 +45,11 @@ delete data in AWS
 check orders
 accelerate unstake
 removeprof
+
+
+cleos -u https://eos.greymass.com get table -l 1 --lower "digiscarcity" gyftietokens gyftietokens profiles
+cleos -u https://eos.greymass.com get table gyftietokens digiscarcity accounts
+cleos -u https://eos.greymass.com get table gyftietokens GFT stat
+➜ cleos -u https://eos.greymass.com get table gyftietokens GFT stat
+
+cleos -u https://eos.greymass.com get table --lower "purposebuilt" gyftietokens gyftietokens profiles
