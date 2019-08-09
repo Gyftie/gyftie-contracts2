@@ -99,6 +99,26 @@ class BadgeClass
         });
     }
 
+    void check_verified (const name&    account)  {
+        if (is_badgeholder ("verifysms"_n, account)   &&
+            is_badgeholder ("verifyemail"_n, account) &&
+            is_badgeholder ("govtidver"_n, account)  &&
+            is_badgeholder ("vouchirl"_n, account)  &&
+            is_badgeholder ("buygft"_n, account)  && 
+            !is_badgeholder (IDENTITY_BADGE, account)) {
+
+                reward_badge (account, IDENTITY_BADGE, "Completed all 5 Gyftie core identity badges"); 
+            }
+        
+        auto p2_itr = profileClass.profile2_t.find (account.value);
+        if (p2_itr != profileClass.profile2_t.end()) {
+            if (!is_badgeholder ("govtidver"_n, account) &&
+                p2_itr->idhash.length() > 0) {
+                    reward_badge (account, "govtidver"_n, "Verified ID in Gyftie 1.0");
+                }
+        }
+    }
+
     void reward_badge (const name&          badge_recipient,
                         const name&         badge_id,
                         const string&       notes) {
@@ -106,7 +126,7 @@ class BadgeClass
         auto b_itr = badge_t.find (badge_id.value);
         check (b_itr != badge_t.end(), "Badge ID does not exist.");
 
-        require_auth (b_itr->issuer);
+        check (has_auth (b_itr->issuer) || has_auth (contract), "Permission denied. Badge reward must be approved by badge creator.");
 
         auto byholder = badgeaccount_t.get_index<"byholder"_n>();
         auto ba_itr = byholder.lower_bound (badge_recipient.value);

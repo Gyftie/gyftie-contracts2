@@ -5,7 +5,9 @@
 #include "gyft.hpp"
 #include "profile.hpp"
 #include "gyftie.hpp"
+#include "badge.hpp"
 #include "common.hpp"
+#include "challenge.hpp"
 
 using namespace eosio;
 using namespace common;
@@ -14,18 +16,20 @@ using namespace common;
 class Permit {
 
     public: 
-    static const int    ANY                 =   0;
-    static const int    GYFT                =   1;
-    static const int    VOTE                =   2;
-    static const int    CHALLENGE           =   3;
-    static const int    VALIDATE            =   4;
-    static const int    PROPOSE             =   5;
-    static const int    TRANSFER            =   6;
-    static const int    REMOVE_PROPOSAL     =   7;
-    static const int    ANY_SIGNATORY       =   8;
-    static const int    AUTH_ACTIVITY       =   9;
-    static const int    LOCK_ACTIVITY       =   10;
-    static const int    ORACLE_ACTIVITY     =   11;
+    static const int    ANY                         =   0;
+    static const int    GYFT                        =   1;
+    static const int    VOTE                        =   2;
+    static const int    CHALLENGE                   =   3;
+    static const int    VALIDATE                    =   4;
+    static const int    PROPOSE                     =   5;
+    static const int    TRANSFER                    =   6;
+    static const int    REMOVE_PROPOSAL             =   7;
+    static const int    ANY_SIGNATORY               =   8;
+    static const int    AUTH_ACTIVITY               =   9;
+    static const int    LOCK_ACTIVITY               =   10;
+    static const int    ORACLE_ACTIVITY             =   11;
+    static const int    SELFORSIGNATORY_ACTIVITY    =   12;
+    static const int    SELLGFT_ACTIVITY            =   13;
 
     struct [[ eosio::table, eosio::contract("gyftietoken") ]] signatory
     {
@@ -67,10 +71,13 @@ class Permit {
             eosio::check (is_account (receiver), "Receiver is not a valid EOS account.");
 
             ProfileClass profileClass (contract);
-            eosio::check (profileClass.exists (account), "Account does not have a Gyftie profile.");
+            
+            eosio::check (!profileClass.existsInV1 (account), "Account " + account.to_string() + " must upgrade profile.");
+            eosio::check (profileClass.existsInV2 (account), "Account " + account.to_string() + " does not have a profile.");
 
             if (receiver.value != 0) {
-                eosio::check (profileClass.exists (receiver), "Reciever does not have a Gyftie profile.");
+                eosio::check (!profileClass.existsInV1 (receiver), "Receiver account " + receiver.to_string() + " must upgrade profile.");
+                eosio::check (profileClass.existsInV2 (receiver), "Receiver account " + receiver.to_string() + " does not have a profile.");
             }
 
             LockClass lockClass (contract);
@@ -80,6 +87,11 @@ class Permit {
             eosio::check (gyftieClass.get_state().paused == UNPAUSED, "Contract is paused.");
             
             // Verify that the account is not being challenged
+            ChallengeClass challengeClass (contract);
+            auto c_itr = challengeClass.challenge_t.find (account.value);
+            check (c_itr == challengeClass.challenge_t.end(), "Account " + account.to_string() + " has an active challenge.");
+            c_itr = challengeClass.challenge_t.find (receiver.value);
+            check (c_itr == challengeClass.challenge_t.end(), "Receiver " + receiver.to_string() + " has an active challenge.");
         }
     };
 
@@ -117,6 +129,38 @@ class Permit {
         static void permit (const name& contract, const name& account) {
             Activity::permit (contract, account, account);
             require_auth (account);
+        }
+    };
+
+    class SellGFTActivity : Activity {
+        public:
+
+        static void permit (const name& contract, const name& account) { //}, const asset& sell_amount) {
+            AuthActivity::permit (contract, account);
+
+            BadgeClass badgeClass (contract);
+            check (badgeClass.is_badgeholder("verified"_n, account), "Account " + account.to_string() + " must be verified (with badge) to sell GFT.");
+        }
+    };
+
+    class SelfOrSignatoryActivity {
+        public:
+
+        static void permit (const name& contract, const name& gyftieAccount) {
+            if (has_auth (gyftieAccount) || has_auth (gyftieAccount)) {
+                return;
+            }
+
+            bool signed_by_signatory = false;
+            signatory_table signatory_t (contract, contract.value);
+            auto s_itr = signatory_t.begin();
+
+            while (!signed_by_signatory && s_itr != signatory_t.end()) {
+                signed_by_signatory = has_auth (s_itr->account);
+                s_itr++;
+            }
+
+            eosio::check (signed_by_signatory, "Transaction requires the approval of the Gyftie account or a signatory.");
         }
     };
 
@@ -214,6 +258,12 @@ class Permit {
                 break;
             case ORACLE_ACTIVITY:
                 OracleActivity::permit (contract, account, receiver);
+                break;
+            case SELFORSIGNATORY_ACTIVITY:
+                SelfOrSignatoryActivity::permit (contract, account);
+                break;
+            case SELLGFT_ACTIVITY:
+                SellGFTActivity::permit (contract, account);
                 break;
         }
     }

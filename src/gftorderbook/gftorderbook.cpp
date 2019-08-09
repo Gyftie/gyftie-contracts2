@@ -625,33 +625,34 @@ ACTION gftorderbook::marketbuy (name buyer, asset eos_amount)
     marketbuyr (buyer, eos_amount);
     // print (" After marketbuyr \n");
 
-    config_table config (get_self(), get_self().value);
-    auto c = config.get();
-    state_table state (get_self(), get_self().value);
-    State s = state.get();
+    // config_table config (get_self(), get_self().value);
+    // auto c = config.get();
+    // state_table state (get_self(), get_self().value);
+    // State s = state.get();
 
-    asset lowest_sell_price = get_lowest_sell();
-    // print (" Lowest sell    : ", lowest_sell_price, "\n");
+    // asset lowest_sell_price = get_lowest_sell();
+    // // print (" Lowest sell    : ", lowest_sell_price, "\n");
 
-    // print (" Order book size    : ", s.buy_orderbook_size_gft, "\n");
-    asset gft_purchasing = get_gft_amount (lowest_sell_price, eos_amount);
-    // print (" GFT Purchasing : ", gft_purchasing, "\n");
+    // // print (" Order book size    : ", s.buy_orderbook_size_gft, "\n");
+    // asset gft_purchasing = get_gft_amount (lowest_sell_price, eos_amount);
+    // // print (" GFT Purchasing : ", gft_purchasing, "\n");
 
-    action (
-        permission_level{get_self(), "owner"_n},
-        c.gyftiecontract, "ibpromo"_n,
-        std::make_tuple(buyer, gft_purchasing, s.buy_orderbook_size_gft))
-    .send();
+    // action (
+    //     permission_level{get_self(), "owner"_n},
+    //     c.gyftiecontract, "ibpromo"_n,
+    //     std::make_tuple(buyer, gft_purchasing, s.buy_orderbook_size_gft))
+    // .send();
  
 }
 
 ACTION gftorderbook::marketsell (name seller, asset gft_amount) 
 {
     check (false, "Instant sell order functionality is currently undergoing maintenance.");
+    
+    permit_selling (seller, gft_amount);
 
     config_table config (get_self(), get_self().value);
     auto c = config.get();
-
     eosio::check (  has_auth (seller) || 
                     has_auth (get_self()) ||
                     has_auth (c.gyftiecontract), "Permission denied.");

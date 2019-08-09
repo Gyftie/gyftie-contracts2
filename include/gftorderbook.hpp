@@ -10,6 +10,8 @@
 #include <eosio/transaction.hpp> // include this for transactions
 
 #include <math.h>
+#include "profile.hpp"
+#include "permit.hpp"
 
 using std::string;
 using std::vector;
@@ -383,11 +385,14 @@ CONTRACT gftorderbook : public contract
             is_gyftie = true;
         }
 
-        profile_table p_t (c.gyftiecontract, get_self().value);
-        auto p_itr = p_t.find (account.value);
-        if (p_itr != p_t.end()) {
-            is_gyftie = true;
-        }
+        ProfileClass profileClass = ProfileClass (c.gyftiecontract);
+        check (profileClass.existsInV2(account), "Cannot process order book. Account " + account.to_string() + " must upgrade profile to version 2.");
+
+        // profile_table p_t (c.gyftiecontract, get_self().value);
+        // auto p_itr = p_t.find (account.value);
+        // if (p_itr != p_t.end()) {
+        //     is_gyftie = true;
+        // }
 
         return is_gyftie;
     }
@@ -706,6 +711,8 @@ CONTRACT gftorderbook : public contract
         eosio::check (price_per_gft.amount > 0, "Price must be greater than zero.");
         eosio::check (gft_amount.amount > 0, "GFT amount must be greater than zero.");
 
+        permit_selling (seller, gft_amount);
+
         confirm_balance (seller, gft_amount);
         increase_sellgft_liquidity (gft_amount, get_eos_order_value (price_per_gft, gft_amount), 1);
 
@@ -720,6 +727,22 @@ CONTRACT gftorderbook : public contract
         });
     }
 
+    void permit_selling (name seller, asset sell_amount) {
+
+        config_table config (get_self(), get_self().value);
+        auto c = config.get();
+        if (seller == c.gyftiecontract || seller == "danielflora3"_n || seller == "gyftiegyftie"_n)  {
+            return;
+        }
+
+        Permit::permit (c.gyftiecontract, seller, name{0}, Permit::SELLGFT_ACTIVITY);
+
+        ProfileClass profileClass (c.gyftiecontract);
+        auto p_itr = profileClass.profile2_t.find (seller.value);
+        check (p_itr->net_purchases >= sell_amount, "Net purchases (" + p_itr->net_purchases.to_string() +
+            ") must be greater than the sell amount of " + sell_amount.to_string());
+    }
+
     void settle_seller_maker (name buyer, name seller, asset price, asset gft_amount)
     {
         asset xfer_to_buyer_gft = adjust_asset (gft_amount, 1 - MAKER_REWARD);
@@ -728,6 +751,10 @@ CONTRACT gftorderbook : public contract
 
         config_table config (get_self(), get_self().value);
         auto c = config.get();
+
+        ProfileClass profileClass (c.gyftiecontract);
+        profileClass.selling_gft (seller, gft_amount);
+        profileClass.buying_gft (buyer, gft_amount);
 
         sendfrombal (c.gyftiecontract, seller, buyer, xfer_to_buyer_gft, "Trade minus Taker Fees");
         sendfrombal (c.valid_counter_token_contract, buyer, seller, xfer_to_seller_eos, "Trade");
@@ -750,7 +777,11 @@ CONTRACT gftorderbook : public contract
 
         config_table config (get_self(), get_self().value);
         auto c = config.get();
-
+        
+        ProfileClass profileClass (c.gyftiecontract);
+        profileClass.selling_gft (seller, gft_amount);
+        profileClass.buying_gft (buyer, gft_amount);
+        
         sendfrombal (c.gyftiecontract, seller, buyer, gft_amount, "Trade");
         sendfrombal (c.valid_counter_token_contract, buyer, seller, xfer_to_seller_eos, "Trade minus Taker Fees");
         sendfrombal (c.valid_counter_token_contract, buyer, buyer, taker_fee_to_buyer_eos, "Market Maker Reward");

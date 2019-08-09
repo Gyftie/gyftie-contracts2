@@ -1,39 +1,41 @@
 
-cleos -u https://jungle2.cryptolions.io push action gyftietoke22 create '[]' -p gyftietoke22
-cleos -u https://jungle2.cryptolions.io push action gyftietoke22 unpause '[]' -p gyftietoke22
-cleos -u https://jungle2.cryptolions.io push action gyftietoke22 reset '[]' -p gyftietoke22
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 create '[]' -p gyftietoke23
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 unpause '[]' -p gyftietoke23
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 reset '[]' -p gyftietoke23
 
-cleos -u https://jungle2.cryptolions.io push action gyftietoke22 createprof '["gyftieuser52"]' -p gyftietoke11
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 createprof '["gyftieuser52"]' -p gyftietoke11
 
-cleos -u https://jungle2.cryptolions.io push action gyftietoke22 createbadge '["verifysms", "SMS Verified", "Verified that user can receive SMS messages", "0.10000000 GFT", "info url", "another image", "textsms", "gyftieoracle", 1]' -p gyftietoke22
-cleos -u https://jungle2.cryptolions.io push action gyftietoke22 createbadge '["verifyemail", "Email Verified", "Verified that user can receive Emails", "0.20000000 GFT", "info url", "another image", "textsms", "gyftieoracle", 1]' -p gyftietoke22
-cleos -u https://jungle2.cryptolions.io push action gyftietoke22 createbadge '["govtidver", "Government-issued ID Verified", "User has saved hash of Government-issued ID", "0.30000000 GFT", "info url", "another image", "textsms", "gyftieoracle", 1]' -p gyftietoke22
-cleos -u https://jungle2.cryptolions.io push action gyftietoke22 createbadge '["vouchirl", "Vouched for In Real Life (IRL)", "Vouched for by someone in real life", "0.40000000 GFT", "info url", "another image", "textsms", "gyftieoracle", 1]' -p gyftietoke22
-cleos -u https://jungle2.cryptolions.io push action gyftietoke22 createbadge '["buygft", "Purchased GFT", "User has purchased some GFT", "1.00000000 GFT", "info url", "another image", "textsms", "gyftieoracle", 1]' -p gyftietoke22
-cleos -u https://jungle2.cryptolions.io push action gyftietoke22 createbadge '["identified", "Fully identified", "User has completed all 5 onboarding steps", "0.00000000 GFT", "info url", "another image", "textsms", "gyftieoracle", 1]' -p gyftietoke22
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 createbadge '["verifysms", "SMS Verified", "Verified that user can receive SMS messages", "0.10000000 GFT", "info url", "another image", "textsms", "gyftieoracle", 1]' -p gyftietoke23
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 createbadge '["verifyemail", "Email Verified", "Verified that user can receive Emails", "0.20000000 GFT", "info url", "another image", "textsms", "gyftieoracle", 1]' -p gyftietoke23
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 createbadge '["govtidver", "Government-issued ID Verified", "User has saved hash of Government-issued ID", "0.30000000 GFT", "info url", "another image", "textsms", "gyftieoracle", 1]' -p gyftietoke23
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 createbadge '["vouchirl", "Vouched for In Real Life (IRL)", "Vouched for by someone in real life", "0.40000000 GFT", "info url", "another image", "textsms", "gyftieoracle", 1]' -p gyftietoke23
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 createbadge '["buygft", "Purchased GFT", "User has purchased some GFT", "1.00000000 GFT", "info url", "another image", "textsms", "gyftieoracle", 1]' -p gyftietoke23
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 createbadge '["identified", "Fully identified", "User has completed all 5 onboarding steps", "0.00000000 GFT", "info url", "another image", "textsms", "gyftieoracle", 1]' -p gyftietoke23
 
-cleos -u https://jungle2.cryptolions.io push action gyftietoke22 issuebadge '["gyftieuser52", 0, "User is now SMS Verified"]' -p gyftietoke22
-cleos -u https://jungle2.cryptolions.io push action gyftietoke22 unissuebadge '["gyftieuser52", 0]' -p gyftietoke22
-cleos -u https://jungle2.cryptolions.io push action gyftietoke22 accelunstake '["gyftieuser52"]' -p gyftietoke22
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 issuebadge '["gyftieuser52", 0, "User is now SMS Verified"]' -p gyftietoke23
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 unissuebadge '["gyftieuser52", 0]' -p gyftietoke23
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 accelunstake '["gyftieuser52"]' -p gyftietoke23
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 upgrade '["agyftieuser1"]' -p gyftietoke23
 
-cleos -u https://jungle2.cryptolions.io push action gyftietoke22 removeprof '["gyftieuser52"]' -p gyftietoke22
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 removeprof '["gyftieuser52"]' -p gyftietoke23
 
-cleos -u https://jungle2.cryptolions.io push action gyftietoke22 setconfig '["gftorderbook","gyftiegyftie","gyftieoracle"]' -p gyftietoke22
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 setconfig '["gftorderboo2","gyftiegyftie","gyftieoracle"]' -p gyftietoke23
 
-cleos -u https://jungle2.cryptolions.io get table gyftietoke22 gyftietoke22 profiles
-cleos -u https://jungle2.cryptolions.io get table gyftietoke22 gyftietoke22 badgeaccts
-cleos -u https://jungle2.cryptolions.io get table gyftietoke22 gyftietoke22 appstates
-cleos -u https://jungle2.cryptolions.io get table gyftietoke22 gyftietoke22 badges
+cleos -u https://jungle2.cryptolions.io get table gyftietoke23 gyftietoke23 profiles
+cleos -u https://jungle2.cryptolions.io get table gyftietoke23 gyftietoke23 badgeaccts
+cleos -u https://jungle2.cryptolions.io get table gyftietoke23 gyftietoke23 appstates
+cleos -u https://jungle2.cryptolions.io get table gyftietoke23 gyftietoke23 badges
 
+cleos -u https://jungle2.cryptolions.io set contract gyftietoke23 gyftie/gyftietoken
 
-cleos -u https://jungle2.cryptolions.io  push action gftorderboo2 setconfig '["gyftietoke22", "eosio.token", "EOS", 4]' -p gftorderboo2
+cleos -u https://jungle2.cryptolions.io  push action gftorderboo2 setconfig '["gyftietoke23", "eosio.token", "EOS", 4]' -p gftorderboo2
 cleos -u https://jungle2.cryptolions.io  push action gftorderboo2 unpause '[]' -p gftorderboo2
 cleos -u https://jungle2.cryptolions.io  push action gftorderboo2 setstate '["5.0000 EOS"]' -p gftorderboo2
 cleos -u https://jungle2.cryptolions.io  push action gftorderboo2 setrewconfig '[750000, 250000]' -p gftorderboo2
 
 cleos -u https://jungle2.cryptolions.io push action eosio.token transfer '["gyftieuser53", "gftorderboo2", "1.0000 EOS", "should succeed"]' -p gyftieuser53
-cleos -u https://jungle2.cryptolions.io push action gyftietoke22 accelunstake '["gyftieuser53"]' -p gyftietoke22
-cleos -u https://jungle2.cryptolions.io push action gyftietoke22 transfer '["gyftieuser53", "gftorderboo2", "0.00010000 GFT", "should succeed"]' -p gyftieuser53
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 accelunstake '["gyftieuser53"]' -p gyftietoke23
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 transfer '["gyftieuser53", "gftorderboo2", "0.00010000 GFT", "should succeed"]' -p gyftieuser53
 
 cleos -u https://jungle2.cryptolions.io push action gftorderboo2 limitbuygft '["gyftieuser53", "0.0100 EOS", "0.00000100 GFT"]' -p gyftieuser53
 cleos -u https://jungle2.cryptolions.io push action gftorderboo2 marketsell '["gyftieuser53", "0.00001000 GFT"]' -p gyftieuser53
@@ -58,7 +60,7 @@ cleos -u https://jungle2.cryptolions.io push action gftorderboo2 marketsell '["g
 
 
 cleos -u https://jungle2.cryptolions.io push action eosio updateauth '{
-    "account": "gftorderboo2",
+    "account": "gyftietoke23",
     "permission": "active",
     "parent": "owner",
     "auth": {
@@ -72,7 +74,7 @@ cleos -u https://jungle2.cryptolions.io push action eosio updateauth '{
         "accounts": [
             {
                 "permission": {
-                    "actor": "gftorderboo2",
+                    "actor": "gyftietoke23",
                     "permission": "eosio.code"
                 },
                 "weight": 1
@@ -80,10 +82,10 @@ cleos -u https://jungle2.cryptolions.io push action eosio updateauth '{
         ],
         "waits": []
     }
-}' -p gftorderboo2@owner
+}' -p gyftietoke23@owner
 
 cleos -u https://jungle2.cryptolions.io push action eosio updateauth '{
-    "account": "gftorderboo2",
+    "account": "gyftietoke23",
     "permission": "owner",
     "parent": "",
     "auth": {
@@ -97,7 +99,7 @@ cleos -u https://jungle2.cryptolions.io push action eosio updateauth '{
         "accounts": [
             {
                 "permission": {
-                    "actor": "gftorderboo2",
+                    "actor": "gyftietoke23",
                     "permission": "eosio.code"
                 },
                 "weight": 1
@@ -105,4 +107,4 @@ cleos -u https://jungle2.cryptolions.io push action eosio updateauth '{
         ],
         "waits": []
     }
-}' -p gftorderboo2@owner
+}' -p gyftietoke23@owner

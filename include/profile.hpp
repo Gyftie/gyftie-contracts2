@@ -11,6 +11,7 @@
 
 using std::string;
 using std::vector;
+using std::map;
 using std::iterator;
 using namespace eosio;
 
@@ -32,17 +33,52 @@ class ProfileClass
       asset         staked_balance;
       asset         unstaking_balance;
 
-      // DEPLOY
-      // vector<name>  promotion_votes;
-      // uint64_t      rank = 0;
-      // uint64_t      by_rank() const { return rank; }
-
-      // uint64_t      voter_count;
-      // uint64_t      scaled_sum_rating;
       uint64_t      primary_key() const { return account.value; }
     };
 
+    struct [[ eosio::table, eosio::contract("gyftietoken") ]] Profile2
+    {
+      name              account;
+      string            idhash;
+      string            id_expiration;
+      string            info_url;
+      asset             gft_balance         = asset {0, common::S_GFT};
+      asset             staked_balance      = asset {0, common::S_GFT};
+      asset             unstaking_balance   = asset {0, common::S_GFT};
+      asset             net_purchases       = asset {0, common::S_GFT};
+
+      vector<name>      promotion_votes_for_this_profile;
+      vector<name>      profiles_this_profile_voted_for;
+      uint64_t          rank = 0;
+
+      map<name, string> attribute_pairs;
+
+      time_point        created_date        = current_block_time().to_time_point();
+      time_point        updated_date        = current_block_time().to_time_point();
+
+      uint64_t          by_rank() const { return rank; }
+      uint64_t          by_balance() const { return gft_balance.amount + 
+                                                    staked_balance.amount + 
+                                                    unstaking_balance.amount; }
+
+      uint64_t          by_created () const { return created_date.sec_since_epoch(); }
+      uint64_t          by_updated () const { return created_date.sec_since_epoch(); }
+      uint64_t          by_netpurchases () const { return net_purchases.amount; }
+      uint64_t          primary_key() const { return account.value; }
+    };
     
+    typedef eosio::multi_index<"profiles2"_n, Profile2,
+      indexed_by<"byrank"_n,
+        const_mem_fun<Profile2, uint64_t, &Profile2::by_rank>>,
+      indexed_by<"bybalance"_n,
+        const_mem_fun<Profile2, uint64_t, &Profile2::by_balance>>,
+      indexed_by<"bycreated"_n,
+        const_mem_fun<Profile2, uint64_t, &Profile2::by_created>>,
+      indexed_by<"byupdated"_n,
+        const_mem_fun<Profile2, uint64_t, &Profile2::by_updated>>,
+      indexed_by<"bynetpur"_n,
+        const_mem_fun<Profile2, uint64_t, &Profile2::by_netpurchases>>
+    > profile2_table;
 
     struct [[ eosio::table, eosio::contract("gyftietoken") ]] Verify
     {
@@ -62,13 +98,7 @@ class ProfileClass
         const_mem_fun<Verify, uint64_t, &Verify::by_verified>>
       > verify_table;
 
-    // DEPLOY
-    // typedef eosio::multi_index<"profiles"_n, Profile,
-    //   indexed_by<"byrank"_n,
-    //     const_mem_fun<Profile, uint64_t, &Profile::by_rank>>>
-    //   profile_table;
-
-     typedef eosio::multi_index<"profiles"_n, Profile> profile_table;
+    typedef eosio::multi_index<"profiles"_n, Profile> profile_table;
 
     struct [[ eosio::table, eosio::contract("gyftietoken") ]] Referral
     {
@@ -84,57 +114,145 @@ class ProfileClass
       > referral_table;
 
     profile_table profile_t;
-    // tprofile_table tprofile_t;
+    profile2_table profile2_t;
     verify_table  verify_t;
     referral_table referral_t;
-    // GyftieClass   gyftieClass;
 
     ProfileClass (const name& contract) 
     : profile_t (contract, contract.value), 
-     // tprofile_t (contract, contract.value),
+      profile2_t (contract, contract.value),
       verify_t (contract, contract.value), 
       referral_t (contract, contract.value),
       contract (contract) {}
 
-    // Profile load (const name& account) {
-    //     auto p_itr = profile_t.find (account.value);
-    //     eosio::check (p_itr != profile_t.end(), "Account profile is not found.");
-
-    //     return *p_itr;
-    // }
-
-    iterator<std::bidirectional_iterator_tag, const ProfileClass::Profile> 
+    iterator<std::bidirectional_iterator_tag, const ProfileClass::Profile2> 
     create (const name& account) {
-        check (profile_t.find (account.value) == profile_t.end(), "Account already has a Gyftie profile.");
+      check (profile_t.find (account.value) == profile_t.end(), "Account " + 
+          account.to_string() + " already has a Gyftie profile - table 1.");
 
-        return profile_t.emplace (contract, [&](auto &p) {
-            p.account = account;
-            p.gft_balance = asset {0, common::S_GFT};
-            p.unstaking_balance = asset {0, common::S_GFT};
-            p.staked_balance = asset {0, common::S_GFT};
-        });         
+      check (profile2_t.find (account.value) == profile2_t.end(), "Account " + 
+          account.to_string() + " already has a Gyftie profile - table 2.");
+
+      return profile2_t.emplace (contract, [&](auto &p) {
+          p.account = account;
+          p.gft_balance = asset {0, common::S_GFT};
+          p.unstaking_balance = asset {0, common::S_GFT};
+          p.staked_balance = asset {0, common::S_GFT};
+      });         
     }
 
-    iterator<std::bidirectional_iterator_tag, const ProfileClass::Profile> 
+    iterator<std::bidirectional_iterator_tag, const ProfileClass::Profile2> 
     create (const name& account, const string& idhash, const string& id_expiration) {
-        check (profile_t.find (account.value) == profile_t.end(), "Account already has a Gyftie profile.");
+      check (profile_t.find (account.value) == profile_t.end(), "Account " + 
+          account.to_string() + " already has a Gyftie profile - table 1.");
 
-        return profile_t.emplace (contract, [&](auto &p) {
-            p.account = account;
-            p.rating_count = 0;
-            p.rating_sum = 0;
-            p.idhash = idhash;
-            p.id_expiration = id_expiration;
-            p.gft_balance = asset {0, common::S_GFT};
-            p.unstaking_balance = asset {0, common::S_GFT};
-            p.staked_balance = asset {0, common::S_GFT};
+      check (profile2_t.find (account.value) == profile2_t.end(), "Account " + 
+          account.to_string() + " already has a Gyftie profile - table 2.");
+
+      return profile2_t.emplace (contract, [&](auto &p) {
+          p.account = account;
+          p.idhash = idhash;
+          p.id_expiration = id_expiration;
+          p.gft_balance = asset {0, common::S_GFT};
+          p.unstaking_balance = asset {0, common::S_GFT};
+          p.staked_balance = asset {0, common::S_GFT};
+      });         
+    }
+
+    void upgrade (const name& account) {
+      bool checker = existsInV1 (account);
+      print ("Exists in V1: ", std::to_string(checker), "\n");
+      if (existsInV1(account)) {
+        auto p_itr = profile_t.find (account.value);
+        check (p_itr != profile_t.end(), "Upgrade failed. Profile for " + account.to_string() + " not found in profile - table 1.");
+
+        print ("Adding " + account.to_string() + " to profile table 2.\n");
+        profile2_t.emplace (contract, [&](auto &p) {
+          p.account = account;
+          p.idhash = p_itr->idhash;
+          p.id_expiration = p_itr->id_expiration;
+          p.gft_balance = p_itr->gft_balance;
+          p.unstaking_balance = p_itr->unstaking_balance;
+          p.staked_balance = p_itr->staked_balance;
         });         
+
+        print ("Erasing record from profile table 1.");
+        profile_t.erase (p_itr);
+      }
+    }
+
+    void buying_gft (const name& account, const asset& amount) {
+      if (existsInV2(account)) {
+        auto p_itr = profile2_t.find (account.value);
+        profile2_t.modify (p_itr, contract, [&](auto &p) {
+          p.net_purchases += amount;
+        }); 
+      }
+    }
+
+    void selling_gft (const name& account, const asset& amount) {
+      if (existsInV2(account)) {
+        auto p_itr = profile2_t.find (account.value);
+        check (p_itr->net_purchases >= amount, "Account " + account.to_string() + 
+          " cannot sell. Selling amount must be less than net purchases. Net purchases: " +
+          p_itr->net_purchases.to_string() + "; Attempted selling amount: " + amount.to_string());
+
+        profile2_t.modify (p_itr, contract, [&](auto &p) {
+          p.net_purchases -= amount;
+        }); 
+      }
+    }
+
+    bool isIDHashMatch (const name& account, const string& idhash) {
+      if (existsInV2(account)) {
+        auto p_itr = profile2_t.find (account.value);
+        return p_itr->idhash.compare(idhash) == 0;
+      } else if (existsInV1(account)) {
+        auto p_itr = profile_t.find (account.value);
+        return p_itr->idhash.compare(idhash) == 0;
+      } else {
+        check (false, "Cannot check idhash. Profile " + account.to_string() + " does not exist in either profile 1 or 2.");
+      }
+      return false;
+    }
+
+    bool existsInV1 (const name& account) {
+      return profile_t.find (account.value) != profile_t.end();
+    }
+
+    bool existsInV2 (const name& account) {
+      auto p_itr = profile2_t.find (account.value);
+      if (p_itr == profile2_t.end()) {
+        print (" User " + account.to_string() + " not found in profile table 2.");
+        return false;
+      }
+      return true;
+      // return profile2_t.find (account.value) != profile2_t.end();
     }
 
     bool exists (const name& account) {
-        return profile_t.find (account.value) != profile_t.end();
+      return existsInV1 (account) || existsInV2 (account);
     }
 
+    void setidhash (const name& account, const string& idhash, const string& id_expiration) {
+
+      if (existsInV2(account)) {
+        auto p_itr = profile2_t.find (account.value);
+        profile2_t.modify (p_itr, contract, [&](auto &p) {
+          p.idhash = idhash;
+          p.id_expiration = id_expiration;
+        }); 
+      } else if (existsInV1(account)) {
+        auto p_itr = profile_t.find (account.value);
+        profile_t.modify (p_itr, contract, [&](auto &p) {
+          p.idhash = idhash;
+          p.id_expiration = id_expiration;
+        }); 
+      } else {
+        check (false, "Cannot set idhash. Profile " + account.to_string() + " does not exist in either profile 1 or 2.");
+      }
+    }
+  
     void verifyuser (const name& verifier, const name& account_to_verify) {
       auto v_itr = verify_t.find (verifier.value);
       bool already_verified = false;
@@ -172,41 +290,78 @@ class ProfileClass
     }
 
     void accelunstake (const name& account) {
-        auto p_itr = profile_t.require_find (account.value);
-
-        profile_t.modify (p_itr, contract, [&](auto &p) {
-            p.gft_balance += p_itr->unstaking_balance + p_itr->staked_balance;
-            p.unstaking_balance *= 0;
-            p.staked_balance *= 0;
+     
+      if (existsInV2(account)) {
+        auto p_itr = profile2_t.find (account.value);
+        profile2_t.modify (p_itr, contract, [&](auto &p) {
+          p.gft_balance += p_itr->unstaking_balance + p_itr->staked_balance;
+          p.unstaking_balance *= 0;
+          p.staked_balance *= 0;
         });
+      } else if (existsInV1(account)) {
+        auto p_itr = profile_t.find (account.value); 
+        profile_t.modify (p_itr, contract, [&](auto &p) {
+          p.gft_balance += p_itr->unstaking_balance + p_itr->staked_balance;
+          p.unstaking_balance *= 0;
+          p.staked_balance *= 0;
+        });
+      } else {
+        check (false, "Cannot accelunstake. Profile " + account.to_string() + " does not exist in either profile 1 or 2.");
+      }
     }
 
     void unstake (const name& account, const asset& quantity) {
 
-        auto p_itr = profile_t.require_find (account.value);
+      if (existsInV2(account)) {
+        auto p_itr = profile2_t.find (account.value);
         check (p_itr->unstaking_balance >= quantity, "Unstaking balance is less than requested.");
-
-        profile_t.modify (p_itr, contract, [&](auto &p) {
-            p.gft_balance += quantity;
-            p.unstaking_balance -= quantity;
+        profile2_t.modify (p_itr, contract, [&](auto &p) {
+          p.gft_balance += p_itr->unstaking_balance + p_itr->staked_balance;
+          p.unstaking_balance *= 0;
+          p.staked_balance *= 0;
         });
+      } else if (existsInV1(account)) {
+        auto p_itr = profile_t.find (account.value); 
+        check (p_itr->unstaking_balance >= quantity, "Unstaking balance is less than requested.");
+        profile_t.modify (p_itr, contract, [&](auto &p) {
+          p.gft_balance += p_itr->unstaking_balance + p_itr->staked_balance;
+          p.unstaking_balance *= 0;
+          p.staked_balance *= 0;
+        });
+      } else {
+        check (false, "Cannot unstake. Profile " + account.to_string() + " does not exist in either profile 1 or 2.");
+      }
     }
 
     void stake (const name& account, const asset& quantity) {
-        print (" Staking ", quantity.to_string(), " for user ", account.to_string(), "\n");
-        
-        auto p_itr = profile_t.require_find (account.value);
+      
+      if (existsInV2(account)) {
+        auto p_itr = profile2_t.find (account.value);
         check (p_itr->gft_balance >= quantity, "Liquid balance is less than quantity unstaking.");
-
-        profile_t.modify (p_itr, contract, [&](auto &p) {
-            p.gft_balance -= quantity;
-            p.staked_balance += quantity;
+        profile2_t.modify (p_itr, contract, [&](auto &p) {
+          p.gft_balance -= quantity;
+          p.staked_balance += quantity;
         });
+      } else if (existsInV1(account)) {
+        auto p_itr = profile_t.find (account.value); 
+        check (p_itr->gft_balance >= quantity, "Liquid balance is less than quantity unstaking.");
+        profile_t.modify (p_itr, contract, [&](auto &p) {
+          p.gft_balance -= quantity;
+          p.staked_balance += quantity;
+        });
+      } else {
+        check (false, "Cannot stake. Profile " + account.to_string() + " does not exist in either profile 1 or 2.");
+      }
     }
 
     void removeprof (const name& account) {
-      auto p_itr = profile_t.require_find (account.value);
-      profile_t.erase (p_itr);
+      if (existsInV1(account)) {
+        auto p_itr = profile_t.require_find (account.value);
+        profile_t.erase (p_itr);
+      } else if (existsInV2(account)) {
+        auto p_itr = profile2_t.require_find (account.value);
+        profile2_t.erase (p_itr);
+      }
 
       auto verified_index = verify_t.get_index<"byverified"_n>();
       auto v_itr = verified_index.lower_bound (account.value);
@@ -230,6 +385,14 @@ class ProfileClass
       while (r_itr2->referrer == account && r_itr2 != referrer_index.end()) {
         r_itr2 = referrer_index.erase (r_itr2);
       } 
+    }
+
+    // only for testing
+    void removeAllV2 () {
+      auto p_itr = profile2_t.begin();
+      while (p_itr != profile2_t.end()) {
+        p_itr = profile2_t.erase (p_itr);
+      }
     }
 
     // void setrank (const name& account, const uint64_t& rank) 
@@ -288,9 +451,6 @@ class ProfileClass
         //         eosio::check (false, "User does not have the votes to be promoted.");
         //     }
         // }
-
-
-
 };
 
 #endif

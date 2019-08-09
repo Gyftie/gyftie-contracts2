@@ -54,8 +54,12 @@ CONTRACT gyftietoken : public contract
     ACTION chgthrottle(const uint32_t throttle);
     ACTION setconfig(const name gftorderbook, const name gyftie_foundation, const name gyftieoracle);
     ACTION setusercnt (const uint32_t count);
-
+    ACTION claim (const name account, const string claim_key);
+    ACTION isstoskoracl (const name to, const asset quantity, const string memo);
+    ACTION upgrade (const name& account);
     ACTION reset ();
+    ACTION smsverify (const name& account); 
+    ACTION remv2profs();
 
     //  Token Actions
     ACTION create();
@@ -70,6 +74,8 @@ CONTRACT gyftietoken : public contract
 
     ACTION verifyuser (const name& verifier, const name& account_to_verify);
     ACTION referuser (const name& referrer, const name& account_to_refer);
+
+    ACTION addhash (const name idchecker, const name idholder, const string idhash, const string id_expiration);
 
     //  Gyfting Actions
     // ACTION gyft2 (const name from, 
@@ -362,22 +368,14 @@ CONTRACT gyftietoken : public contract
             a.balance -= value;
         });
 
-        auto p_begin = profileClass.profile_t.begin();
-        // auto p_second = p_begin++;
-        // auto p_nearend = profileClass.profile_t.end()--;
-        auto p_itr = profileClass.profile_t.find (owner.value);
-
-         eosio::check (p_itr != profileClass.profile_t.end(), "Cannot subtract " + value.to_string() + 
-            " from balance. Gyftie profile not found: " + owner.to_string() + ". First account in list is: " + 
-            p_begin->account.to_string());
-
-        // eosio::check (p_itr != profileClass.profile_t.end(), "Cannot subtract " + value.to_string() + 
-        //     " from balance. Gyftie profile not found: " + owner.to_string() + ". First account in list is: " + 
-        //     p_begin->account.to_string() + ", second is " + p_second->account.to_string() + ", Near end is: " + p_nearend->account.to_string());
+        // update profile balances       
+        check (profileClass.existsInV2(owner), "Cannot subtract from balance. Account " + owner.to_string() + " must upgrade profile to version 2.");
+        auto p_itr = profileClass.profile2_t.find (owner.value);
+        eosio::check (p_itr != profileClass.profile2_t.end(), "Cannot add to balance. Account " + owner.to_string() + " profile not found.");
 
         eosio::check (p_itr->gft_balance >= value, "overdrawn balance - GFT is staked");
 
-        profileClass.profile_t.modify (p_itr, get_self(), [&](auto &p) {
+        profileClass.profile2_t.modify (p_itr, get_self(), [&](auto &p) {
             p.gft_balance -= value;
         });
     }
@@ -407,11 +405,12 @@ CONTRACT gyftietoken : public contract
                 a.balance += value;
             });
         }
-        // profile_table p_t (get_self(), get_self().value);
-        auto p_itr = profileClass.profile_t.find (owner.value);
-        eosio::check (p_itr != profileClass.profile_t.end(), "Cannot add to balance. Gyftie profile not found: " + owner.to_string());
 
-        profileClass.profile_t.modify (p_itr, get_self(), [&](auto &p) {
+        check (profileClass.existsInV2(owner), "Cannot add to balance. Account " + owner.to_string() + " must upgrade profile to version 2.");
+        auto p_itr = profileClass.profile2_t.find (owner.value);
+        eosio::check (p_itr != profileClass.profile2_t.end(), "Cannot add to balance. Account " + owner.to_string() + " profile not found.");
+
+        profileClass.profile2_t.modify (p_itr, get_self(), [&](auto &p) {
             p.gft_balance += value;
         });
     }

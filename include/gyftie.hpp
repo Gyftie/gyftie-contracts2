@@ -46,12 +46,16 @@ class GyftieClass {
          state.gyftieoracle = gyftieoracle;
          
          ProfileClass pc = ProfileClass (contract);
-         if (!pc.exists (gftorderbook)) {
+         if (!pc.existsInV2 (gftorderbook)) {
             pc.create (gftorderbook, "GFT Order Book Account", "NO EXPIRATION");
          }
 
-         if (!pc.exists (gyftiegyftie)) {
+         if (!pc.existsInV2 (gyftiegyftie)) {
             pc.create (gyftiegyftie, "Gyftie Limited Account", "NO EXPIRATION");
+         }
+
+         if (!pc.existsInV2 (contract)) {
+            pc.create (contract, "Gyftie Token Account", "NO EXPIRATION");
          }
 
          appstate_t.set (state, contract);

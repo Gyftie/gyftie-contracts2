@@ -13,7 +13,7 @@ using std::vector;
 using std::iterator;
 using namespace eosio;
 
-class BadgeClass
+class ChallengeClass
 {
 
   private:
@@ -30,9 +30,9 @@ class BadgeClass
         uint64_t        primary_key () const { return challenged_account.value; }
         uint64_t        by_challenger() const { return challenger_account.value; }
     };
-    typedef eosio::multi_index<"challenges"_n, challenge,
+    typedef eosio::multi_index<"challenges"_n, Challenge,
         indexed_by<"bychallenger"_n,
-            const_mem_fun<challenge, uint64_t, &challenge::by_challenger>>
+            const_mem_fun<Challenge, uint64_t, &Challenge::by_challenger>>
     > challenge_table;
 
     challenge_table     challenge_t;
