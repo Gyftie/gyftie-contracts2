@@ -75,6 +75,9 @@ CONTRACT gyftietoken : public contract
     ACTION verifyuser (const name& verifier, const name& account_to_verify);
     ACTION referuser (const name& referrer, const name& account_to_refer);
 
+    ACTION sellnotify (const name& seller, const asset& amount);
+    ACTION buynotify (const name& buyer, const asset& amount);
+
     ACTION addhash (const name idchecker, const name idholder, const string idhash, const string id_expiration);
 
     //  Gyfting Actions
@@ -113,6 +116,7 @@ CONTRACT gyftietoken : public contract
 
     ACTION issuebadge (const name& badge_recipient, const name& badge_id, const string& notes);
     ACTION unissuebadge (const name& badge_recipient, const name& badge_id);
+    ACTION issueidemp(const name& badge_recipient, const name& badge_id, const string& notes);
 
     //   Profile Challenge Actions
     ACTION nchallenge (const name challenger_account, const name challenged_account, const string notes);
@@ -371,13 +375,31 @@ CONTRACT gyftietoken : public contract
         // update profile balances       
         check (profileClass.existsInV2(owner), "Cannot subtract from balance. Account " + owner.to_string() + " must upgrade profile to version 2.");
         auto p_itr = profileClass.profile2_t.find (owner.value);
-        eosio::check (p_itr != profileClass.profile2_t.end(), "Cannot add to balance. Account " + owner.to_string() + " profile not found.");
+        eosio::check (p_itr != profileClass.profile2_t.end(), "Cannot subtract from balance. Account " + owner.to_string() + " profile not found.");
 
         eosio::check (p_itr->gft_balance >= value, "overdrawn balance - GFT is staked");
 
         profileClass.profile2_t.modify (p_itr, get_self(), [&](auto &p) {
             p.gft_balance -= value;
         });
+
+        // if (profileClass.existsInV1(owner)) {
+        //     auto p_itr = profileClass.profile_t.find (owner.value);
+        //     eosio::check (p_itr->gft_balance >= value, "overdrawn balance - GFT is staked");
+
+        //     profileClass.profile_t.modify (p_itr, get_self(), [&](auto &p) {
+        //         p.gft_balance -= value;
+        //     });
+        // } else if (profileClass.existsInV2(owner)) {
+        //     auto p_itr = profileClass.profile2_t.find (owner.value);
+        //     eosio::check (p_itr->gft_balance >= value, "overdrawn balance - GFT is staked");
+
+        //     profileClass.profile2_t.modify (p_itr, get_self(), [&](auto &p) {
+        //         p.gft_balance -= value;
+        //     });
+        // } else {
+        //     check (false, 'Profile not found in either v1 or v2');
+        // }
     }
 
     void add_balance(const name owner, const asset value, const name ram_payer)
@@ -406,7 +428,21 @@ CONTRACT gyftietoken : public contract
             });
         }
 
+        // if (profileClass.existsInV1(owner)) {
+        //     auto p_itr = profileClass.profile_t.find (owner.value);
+        //     profileClass.profile_t.modify (p_itr, get_self(), [&](auto &p) {
+        //         p.gft_balance += value;
+        //     });
+        // } else if (profileClass.existsInV2(owner)) {
+        //     auto p_itr = profileClass.profile2_t.find (owner.value);
+        //     profileClass.profile2_t.modify (p_itr, get_self(), [&](auto &p) {
+        //         p.gft_balance += value;
+        //     });
+        // } else {
+        //     check (false, 'Profile not found in either v1 or v2');
+        // }
         check (profileClass.existsInV2(owner), "Cannot add to balance. Account " + owner.to_string() + " must upgrade profile to version 2.");
+
         auto p_itr = profileClass.profile2_t.find (owner.value);
         eosio::check (p_itr != profileClass.profile2_t.end(), "Cannot add to balance. Account " + owner.to_string() + " profile not found.");
 

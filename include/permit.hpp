@@ -16,20 +16,20 @@ using namespace common;
 class Permit {
 
     public: 
-    static const int    ANY                         =   0;
-    static const int    GYFT                        =   1;
-    static const int    VOTE                        =   2;
-    static const int    CHALLENGE                   =   3;
-    static const int    VALIDATE                    =   4;
-    static const int    PROPOSE                     =   5;
-    static const int    TRANSFER                    =   6;
-    static const int    REMOVE_PROPOSAL             =   7;
-    static const int    ANY_SIGNATORY               =   8;
-    static const int    AUTH_ACTIVITY               =   9;
-    static const int    LOCK_ACTIVITY               =   10;
-    static const int    ORACLE_ACTIVITY             =   11;
-    static const int    SELFORSIGNATORY_ACTIVITY    =   12;
-    static const int    SELLGFT_ACTIVITY            =   13;
+    // static const int    ANY                         =   0;
+    // static const int    GYFT                        =   1;
+    // static const int    VOTE                        =   2;
+    // static const int    CHALLENGE                   =   3;
+    // static const int    VALIDATE                    =   4;
+    // static const int    PROPOSE                     =   5;
+    // static const int    TRANSFER                    =   6;
+    // static const int    REMOVE_PROPOSAL             =   7;
+    // static const int    ANY_SIGNATORY               =   8;
+    // static const int    AUTH_ACTIVITY               =   9;
+    // static const int    LOCK_ACTIVITY               =   10;
+    // static const int    ORACLE_ACTIVITY             =   11;
+    // static const int    SELFORSIGNATORY_ACTIVITY    =   12;
+    // static const int    SELLGFT_ACTIVITY            =   13;
 
     struct [[ eosio::table, eosio::contract("gyftietoken") ]] signatory
     {
@@ -139,7 +139,7 @@ class Permit {
             AuthActivity::permit (contract, account);
 
             BadgeClass badgeClass (contract);
-            check (badgeClass.is_badgeholder("verified"_n, account), "Account " + account.to_string() + " must be verified (with badge) to sell GFT.");
+            check (badgeClass.is_badgeholder("identified"_n, account), "Account " + account.to_string() + " must be verified (with badge) to sell GFT.");
         }
     };
 
@@ -169,7 +169,7 @@ class Permit {
         public: 
 
         static void permit (const name& contract) {
-           
+            print (" \n Signatory Activity \n");
             if (has_auth (contract)) {
                 return;
             }
@@ -182,7 +182,7 @@ class Permit {
                 signed_by_signatory = has_auth (s_itr->account);
                 s_itr++;
             }
-
+            print (" Signed by signatory: ", std::to_string (signed_by_signatory), "\n");
             eosio::check (signed_by_signatory, "Transaction requires the approval of a signatory.");
         }
     };
@@ -190,6 +190,9 @@ class Permit {
     class LockActivity : SignatoryActivity {
         public:
         static void permit (const name& contract, const name& account) {
+            print ("\n Lock Activity \n");
+            // require_auth (contract);
+            print (" \nAfter require auth\n");
             SignatoryActivity::permit (contract);
 
             eosio::check (is_account (account), "Account is not a valid EOS account.");
@@ -225,44 +228,51 @@ class Permit {
     };
     
     static void permit  (const name& contract, const name& account, const name& receiver, const int& permission) {
+        print (" Permit :: permit, permission : ", std::to_string(permission), "\n");
+        print (" Contract : ", contract.to_string(), "\n");
+        print (" Account : ", account.to_string(), "\n");
+        // print (" Permit.LOCK_ACTIVITY: ", std::to_string(Permit.LOCK_ACTIVITY), "\n");
+        print (" Permit::LOCK_ACTIVITY: ", std::to_string(common::LOCK_ACTIVITY), "\n");
+
+        print (" Permit::ANY_SIGNATORY: ", std::to_string(common::ANY_SIGNATORY), "\n");
         switch (permission) {
-            case ANY:
+            case common::ANY:
                 Activity::permit (contract, account, receiver);
                 break;
-            case CHALLENGE:
+            case common::CHALLENGE:
                 ChallengeActivity::permit (contract, account, receiver);
                 break;
-            case VALIDATE:
+            case common::VALIDATE:
                 ValidateActivity::permit (contract, account, receiver);
                 break;
-            case PROPOSE:
+            case common::PROPOSE:
                 Activity::permit (contract, account, receiver);
                 break;
-            case TRANSFER:
+            case common::TRANSFER:
                 Activity::permit (contract, account, receiver);
                 break;
-            case GYFT:
+            case common::GYFT:
                 Activity::permit (contract, account, receiver);
                 break;
-            case REMOVE_PROPOSAL:
+            case common::REMOVE_PROPOSAL:
                 AuthActivity::permit (contract, account);
                 break;
-            case ANY_SIGNATORY: 
+            case common::ANY_SIGNATORY: 
                 SignatoryActivity::permit (contract);
                 break;
-            case AUTH_ACTIVITY: 
+            case common::AUTH_ACTIVITY: 
                 AuthActivity::permit (contract, account);
                 break;
-            case LOCK_ACTIVITY:
+            case common::LOCK_ACTIVITY:
                 LockActivity::permit (contract, account);
                 break;
-            case ORACLE_ACTIVITY:
+            case common::ORACLE_ACTIVITY:
                 OracleActivity::permit (contract, account, receiver);
                 break;
-            case SELFORSIGNATORY_ACTIVITY:
+            case common::SELFORSIGNATORY_ACTIVITY:
                 SelfOrSignatoryActivity::permit (contract, account);
                 break;
-            case SELLGFT_ACTIVITY:
+            case common::SELLGFT_ACTIVITY:
                 SellGFTActivity::permit (contract, account);
                 break;
         }

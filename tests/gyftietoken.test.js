@@ -447,6 +447,13 @@ describe("Gyftie Testing", function() {
   //   assert.equal (member10profile.staked_balance, "2.00000000 GFT");
   // });
 
+  it('TEST 10 :::: It should create a profile and issue tokens to stake', async () => {
 
+    await gyftieTokenContract.addlock (member8.name, { from: member8 });
+    
+    const member8profile = await getProfile (member10);
+    console.log (member8profile);
+    
+  });
 
 });

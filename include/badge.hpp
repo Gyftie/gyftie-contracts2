@@ -119,6 +119,14 @@ class BadgeClass
         }
     }
 
+    void reward_idempotent (const name&     badge_recipient, 
+                            const name&     badge_id,
+                            const string&   notes) {
+        if (! is_badgeholder(badge_id, badge_recipient)) {
+            reward_badge (badge_recipient, badge_id, notes);
+        }
+    }
+
     void reward_badge (const name&          badge_recipient,
                         const name&         badge_id,
                         const string&       notes) {

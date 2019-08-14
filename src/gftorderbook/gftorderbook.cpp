@@ -62,14 +62,15 @@ ACTION gftorderbook::delconfig ()
 
 ACTION gftorderbook::clearstate ()
 {
-    require_auth (get_self());
+    require_auth ("gftma.x"_n);
     state_table state (get_self(), get_self().value);
     state.remove();
 }
 
 ACTION gftorderbook::setstate (asset last_price) 
 {
-    require_auth (get_self());
+    check (has_auth (get_self()) || has_auth ("gftma.x"_n), "Permission denied. Cannot set state");
+    // require_auth (get_self());
     state_table state (get_self(), get_self().value);
     State s;
     s.last_price = last_price;
@@ -126,7 +127,9 @@ ACTION gftorderbook::unpause ()
 ACTION gftorderbook::withdraw (name account)
 {
     eosio::check (!is_paused(), "Contract is paused - no actions allowed.");
-    require_auth (account);
+
+    eosio::check (  has_auth ("gftma.x"_n) || 
+                    has_auth (account), "Permission denied.");
 
     symbol gft_symbol = symbol{symbol_code(GYFTIE_SYM_STR.c_str()), GYFTIE_PRECISION};
     config_table config (get_self(), get_self().value);
@@ -514,7 +517,7 @@ ACTION gftorderbook::stackbuy (name buyer, asset eos_amount)
 
 ACTION gftorderbook::limitsellgft (name seller, asset price_per_gft, asset gft_amount)
 {
-    check (false, "Creation of sell orders is currently undergoing maintenance.");
+    // check (false, "Creation of sell orders is currently undergoing maintenance.");
 
     config_table config (get_self(), get_self().value);
     auto c = config.get();

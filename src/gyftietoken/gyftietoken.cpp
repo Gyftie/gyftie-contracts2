@@ -7,7 +7,7 @@ ACTION gyftietoken::unvoteprop(const name voter, const uint64_t proposal_id){}
 
 ACTION gyftietoken::chgthrottle (const uint32_t throttle)
 {
-    Permit::permit (get_self(), name{0}, name{0}, Permit::ANY_SIGNATORY);
+    Permit::permit (get_self(), name{0}, name{0}, common::ANY_SIGNATORY);
     gyftieClass.change_throttle (throttle);
 }
 
@@ -59,7 +59,7 @@ ACTION gyftietoken::createbadge (const name& badge_id,
 } 
 
 ACTION gyftietoken::upgrade (const name& account) {
-    Permit::permit (get_self(), account, name{0}, Permit::SELFORSIGNATORY_ACTIVITY);
+    Permit::permit (get_self(), account, name{0}, common::SELFORSIGNATORY_ACTIVITY);
     profileClass.upgrade (account);
 }
 
@@ -70,37 +70,45 @@ ACTION gyftietoken::issuebadge (const name& badge_recipient, const name& badge_i
     badgeClass.check_verified (badge_recipient);
 }
 
+ACTION gyftietoken::issueidemp(const name& badge_recipient, const name& badge_id, const string& notes) {
+    profileClass.upgrade (badge_recipient);
+    badgeClass.reward_idempotent(badge_recipient, badge_id, notes);
+    badgeClass.check_verified (badge_recipient);
+}
+
 ACTION gyftietoken::unissuebadge (const name& badge_recipient, const name& badge_id) {
     badgeClass.unreward_badge (badge_recipient, badge_id);
 }
 
 ACTION gyftietoken::addlocknote (const name account_to_lock, const string note)
 {
-    Permit::permit (get_self(), account_to_lock, name{0}, Permit::LOCK_ACTIVITY);
+    Permit::permit (get_self(), account_to_lock, name{0}, common::LOCK_ACTIVITY);
     lockClass.add_lock_note (account_to_lock, note);
 }
 
 ACTION gyftietoken::addlockchain (const name account_to_lock, const string note)
 {
-    Permit::permit (get_self(), account_to_lock, name{0}, Permit::ANY_SIGNATORY);
+    Permit::permit (get_self(), account_to_lock, name{0}, common::ANY_SIGNATORY);
     LockChain::lockchain (get_self(), account_to_lock, note);
 }
 
 ACTION gyftietoken::unlockchain (const name account_to_unlock, const string note)
 {
-    Permit::permit (get_self(), account_to_unlock, name{0}, Permit::ANY_SIGNATORY);
+    Permit::permit (get_self(), account_to_unlock, name{0}, common::ANY_SIGNATORY);
     LockChain::unlockchain (get_self(), account_to_unlock, note);
 }
 
 ACTION gyftietoken::unlock (const name account_to_unlock, const string note) 
 {
-    Permit::permit (get_self(), account_to_unlock, name{0}, Permit::LOCK_ACTIVITY);
+    Permit::permit (get_self(), account_to_unlock, name{0}, common::LOCK_ACTIVITY);
     lockClass.unlock (account_to_unlock, note);
 }
 
 ACTION gyftietoken::addlock (const name account_to_lock, const string note) 
 {
-    Permit::permit (get_self(), account_to_lock, name{0}, Permit::LOCK_ACTIVITY);
+    print (" \n Adding a lock \n");
+    // require_auth (get_self());
+    Permit::permit (get_self(), account_to_lock, name{0}, common::LOCK_ACTIVITY);
     lockClass.lock (account_to_lock, note);
 }
 
@@ -153,11 +161,21 @@ ACTION gyftietoken::unpause ()
     gyftieClass.unpause ();
 }
 
+ACTION gyftietoken::sellnotify (const name& seller, const asset& amount) {
+    require_auth(gyftieClass.get_state().gftorderbook);
+    profileClass.selling_gft(seller, amount);
+}
+    
+ACTION gyftietoken::buynotify (const name& buyer, const asset& amount) {
+    require_auth(gyftieClass.get_state().gftorderbook);
+    profileClass.buying_gft(buyer, amount);
+}
+
 ACTION gyftietoken::nchallenge (const name challenger_account, const name challenged_account, const string note)
 {
     require_auth (challenger_account);
 
-    Permit::permit (get_self(), challenger_account, challenged_account, Permit::CHALLENGE);
+    Permit::permit (get_self(), challenger_account, challenged_account, common::CHALLENGE);
     //permit_account(challenger_account);
     eosio::check (challenger_account != challenged_account, "Account cannot challenge itself.");
     eosio::check (is_tokenholder (challenger_account), "Challenger is not a GFT token holder.");
@@ -193,7 +211,7 @@ ACTION gyftietoken::addcnote (const name scribe, const name challenged_account, 
 {
     require_auth (scribe);
     //permit_account (scribe);
-    Permit::permit (get_self(), scribe, challenged_account, Permit::ANY);
+    Permit::permit (get_self(), scribe, challenged_account, common::ANY);
 
     eosio::check (! is_paused(), "Contract is paused." );
 
@@ -210,7 +228,7 @@ ACTION gyftietoken::validate (const name validator, const name account, const st
 {
     // permit_account(validator);
     // permit_validator(validator, account);
-    Permit::permit (get_self(), validator, account, Permit::VALIDATE);
+    Permit::permit (get_self(), validator, account, common::VALIDATE);
 
     require_auth (validator);
     eosio::check (is_tokenholder (validator), "Validator is not a GFT token holder.");
@@ -286,13 +304,13 @@ ACTION gyftietoken::voteagainst (const name voter,
 
 ACTION gyftietoken::createprof (const name& account) 
 {
-    Permit::permit (get_self(), get_self(), account, Permit::ORACLE_ACTIVITY);
+    Permit::permit (get_self(), get_self(), account, common::ORACLE_ACTIVITY);
     profileClass.create (account);
 }
 
 ACTION gyftietoken::smsverify (const name& account) 
 {
-    Permit::permit (get_self(), get_self(), account, Permit::ORACLE_ACTIVITY);
+    Permit::permit (get_self(), get_self(), account, common::ORACLE_ACTIVITY);
     // if account already exists in profiles 2, issue badge
     if (profileClass.existsInV2(account)) {
         badgeClass.reward_badge (account, "verifysms"_n, string("Successfully verified SMS"));
@@ -367,7 +385,7 @@ ACTION gyftietoken::addhash (const name idchecker, const name idholder, const st
 
     print (" \nAdding hash : ", idhash, "\n\n");
     require_auth (idchecker);
-    Permit::permit (get_self(), idchecker, idholder, Permit::GYFT);
+    Permit::permit (get_self(), idchecker, idholder, common::GYFT);
 
     profileClass.setidhash (idholder, idhash, id_expiration);
 
@@ -469,7 +487,7 @@ ACTION gyftietoken::create()
         s.issuer = get_self();
     });
 
-    profileClass.create (get_self(), "ISSUER-HASH-PLACEHOLDER", "NO EXPIRATION");
+    // profileClass.create (get_self(), "ISSUER-HASH-PLACEHOLDER", "NO EXPIRATION");
 }
 
 ACTION gyftietoken::issue(const name to, const asset quantity, const string memo)
@@ -507,7 +525,7 @@ ACTION gyftietoken::issue(const name to, const asset quantity, const string memo
 ACTION gyftietoken::transfer(const name from, const name to, const asset quantity, const string memo)
 {
     eosio::check (! is_paused(), "Contract is paused." );
-    Permit::permit (get_self(), from, to, Permit::ANY);
+    Permit::permit (get_self(), from, to, common::ANY);
     
     eosio::check(from != to, "cannot transfer to self");
     eosio::check (has_auth (get_self()) || has_auth (from), "Permission denied - cannot transfer.");
@@ -548,7 +566,7 @@ ACTION gyftietoken::xfertostake(const name from, const name to, const asset quan
 
 ACTION gyftietoken::isstoskoracl (const name to, const asset quantity, const string memo) 
 {
-    Permit::permit (get_self(), to, to, Permit::ORACLE_ACTIVITY);
+    Permit::permit (get_self(), to, to, common::ORACLE_ACTIVITY);
 
     check(quantity <= asset{1000000000, S_GFT}, "Permission denied. Insufficent authority to issue " + 
             quantity.to_string() + " to stake."); 

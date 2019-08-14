@@ -59,7 +59,7 @@ class ProposalClass {
         iterator<std::bidirectional_iterator_tag, const Proposal> create (const name& proposer, const string& notes) {
             require_auth (proposer);
 
-            Permit::permit (contract, proposer, name{0}, Permit::PROPOSE);
+            Permit::permit (contract, proposer, name{0}, common::PROPOSE);
 
             return proposal_t.emplace (proposer, [&](auto &p) {
                 p.proposal_id       = proposal_t.available_primary_key();
@@ -87,7 +87,7 @@ class ProposalClass {
             auto p_itr = proposal_t.find (proposal_id);
             eosio::check (p_itr != proposal_t.end(), "Proposal ID is not found: " + std::to_string(proposal_id));
 
-            Permit::permit (contract, p_itr->proposer, name{0}, Permit::REMOVE_PROPOSAL);
+            Permit::permit (contract, p_itr->proposer, name{0}, common::REMOVE_PROPOSAL);
 
             return proposal_t.erase (p_itr);
         }
@@ -103,7 +103,7 @@ class ProposalClass {
         }
 
         iterator<std::bidirectional_iterator_tag, const Proposal> vote_for (const name& voter, const uint64_t& proposal_id) {
-            Permit::permit (contract, voter, name{0}, Permit::AUTH_ACTIVITY);
+            Permit::permit (contract, voter, name{0}, common::AUTH_ACTIVITY);
             
             auto p_itr = proposal_t.find (proposal_id);
             check (p_itr != proposal_t.end(), "Proposal ID does not exist: " + std::to_string(proposal_id));
@@ -117,7 +117,7 @@ class ProposalClass {
         }
 
         iterator<std::bidirectional_iterator_tag, const Proposal> vote_against (const name& voter, const uint64_t& proposal_id) {
-            Permit::permit (contract, voter, name{0}, Permit::AUTH_ACTIVITY);
+            Permit::permit (contract, voter, name{0}, common::AUTH_ACTIVITY);
 
             auto p_itr = proposal_t.find (proposal_id);
             check (p_itr != proposal_t.end(), "Proposal ID does not exist: " + std::to_string(proposal_id));
