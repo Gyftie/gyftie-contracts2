@@ -3,6 +3,15 @@ cleos -u https://api.eosnewyork.io multisig propose_trx redeploy2 '[{"actor": "g
 cleos -u https://api.eosnewyork.io  push action gyftmultisig addproposal '["gftma.x", "amandarachel", "redeploy2", "Too many changes to list - initial deployment of Gyftie 2.0", "https://github.com/gyftie/gyftie-contracts2/commit/0730bd33ff0d252d8f3eef718bec09e6cdfe3962"]' -p gftma.x
 cleos -u https://api.eosnewyork.io multisig approve gftma.x redeploy2 '{"actor": "gftma.x", "permission": "active"}' -p gftma.x
 
+
+cleos -u https://api.eosnewyork.io set contract -sjd -x 186400 gftorderbook gyftie/gftorderbook/ > gftorderbook_deploy.json
+cleos -u https://api.eosnewyork.io multisig propose_trx ordbookdep '[{"actor": "gftma.x", "permission": "active"}, {"actor": "amandarachel", "permission": "active"}]' ./gftorderbook_deploy.json gftma.x
+cleos -u https://api.eosnewyork.io  push action gyftmultisig addproposal '["gftma.x", "amandarachel", "ordbookdep", "GFT Order Book - redeploy", "https://github.com/gyftie/gyftie-contracts2/commit/0730bd33ff0d252d8f3eef718bec09e6cdfe3962"]' -p gftma.x
+cleos -u https://api.eosnewyork.io multisig approve gftma.x ordbookdep '{"actor": "gftma.x", "permission": "active"}' -p gftma.x
+
+
+
+
 cleos -u https://api.eosnewyork.io push action -sjd -x 86400 gyftietokens setconfig '["gftorderbook", "gyftiegyftie", "gyftieoracle"]' -p gyftietokens > gyftietokens_setconfig.json
 cleos -u https://api.eosnewyork.io multisig propose_trx setconfig '[{"actor": "gftma.x", "permission": "active"}, {"actor": "amandarachel", "permission": "active"}]' ./gyftietokens_setconfig.json gftma.x
 cleos -u https://api.eosnewyork.io  push action gyftmultisig addproposal '["gftma.x", "amandarachel", "setconfig", "Do this one last", "No Link"]' -p gftma.x

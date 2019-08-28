@@ -5,7 +5,7 @@
 #include <eosio/time.hpp>
 #include <eosio/system.hpp>
 #include <string>
-#include <algorithm>    // std::find
+#include <algorithm>    // std::min
 #include <eosio/singleton.hpp>
 #include <eosio/transaction.hpp> // include this for transactions
 

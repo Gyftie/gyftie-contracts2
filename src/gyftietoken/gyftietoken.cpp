@@ -1,9 +1,19 @@
 #include <gyftietoken.hpp>
 
-ACTION gyftietoken::promoteuser (const name account){}
-ACTION gyftietoken::voteforuser (const name voter, const name profile, const uint8_t vote) {}
-ACTION gyftietoken::addrating(const name rater, const name ratee, const uint8_t rating) {}
-ACTION gyftietoken::unvoteprop(const name voter, const uint64_t proposal_id){}
+ACTION gyftietoken::promoteuser (const name account){
+}
+
+ACTION gyftietoken::voteforuser (const name voter, const name profile) {
+    profileClass.vote_to_promote_profile (voter, profile);
+}
+
+ACTION gyftietoken::addrating(const name rater, const name ratee, const uint8_t rating) {
+
+}
+
+ACTION gyftietoken::unvoteprop(const name voter, const uint64_t proposal_id){
+
+}
 
 ACTION gyftietoken::chgthrottle (const uint32_t throttle)
 {
@@ -17,11 +27,11 @@ ACTION gyftietoken::xferzj ()
     // xfer_account ("zombiejigsaw"_n, "gftma.x"_n);
 }
 
-ACTION gyftietoken::remv2profs ()
-{
-    require_auth (get_self());
-    profileClass.removeAllV2();
-}
+// ACTION gyftietoken::remv2profs ()
+// {
+//     require_auth (get_self());
+//     profileClass.removeAllV2();
+// }
 
 ACTION gyftietoken::backupprofs (const name& profile) {
     require_auth ("gftma.x"_n);
@@ -275,7 +285,7 @@ ACTION gyftietoken::validate (const name validator, const name account, const st
 
 ACTION gyftietoken::setrank (const name account, const uint64_t rank) 
 {
-    // profileClass.setrank (account, rank);
+    profileClass.setrank (account, rank);
 }
 
 ACTION gyftietoken::removeprop (const uint64_t proposal_id) 

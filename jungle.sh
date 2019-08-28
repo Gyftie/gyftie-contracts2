@@ -19,7 +19,7 @@ cleos -u https://jungle2.cryptolions.io push action gyftietoke23 upgrade '["agyf
 
 cleos -u https://jungle2.cryptolions.io push action gyftietoke23 removeprof '["gyftieuser52"]' -p gyftietoke23
 
-cleos -u https://jungle2.cryptolions.io push action gyftietoke23 setconfig '["gftorderboo2","gyftiegyftie","gyftieoracle"]' -p gyftietoke23
+cleos -u https://jungle2.cryptolions.io push action gyftietoke23 setconfig '["gftorderboo3","gyftiegyftie","gyftieoracle"]' -p gyftietoke23
 
 cleos -u https://jungle2.cryptolions.io get table gyftietoke23 gyftietoke23 profiles
 cleos -u https://jungle2.cryptolions.io get table gyftietoke23 gyftietoke23 badgeaccts
@@ -66,7 +66,7 @@ cleos -u https://jungle2.cryptolions.io push action eosio updateauth '{
     "auth": {
         "keys": [
             {
-                "key": "EOS85AboyypCNfuENiDo8986J3tGiXMQ46m1eTimB1GDzKvVHNqWj",
+                "key": "EOS6gdxdxgUgscz7GnfhUoXgoCDhHEq5kHjyHBrNZqXzhxYHCVWc4",
                 "weight": 1
             }
         ],
@@ -91,7 +91,7 @@ cleos -u https://jungle2.cryptolions.io push action eosio updateauth '{
     "auth": {
         "keys": [
             {
-                "key": "EOS85AboyypCNfuENiDo8986J3tGiXMQ46m1eTimB1GDzKvVHNqWj",
+                "key": "EOS6gdxdxgUgscz7GnfhUoXgoCDhHEq5kHjyHBrNZqXzhxYHCVWc4",
                 "weight": 1
             }
         ],

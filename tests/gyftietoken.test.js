@@ -13,6 +13,7 @@ const GFTORDERBOOK_ABI = "../gyftie/gftorderbook/gftorderbook.abi";
 let gyftieTokenContract, eosTokenContract, gftOrderBookContract, gyftieOracle;
 let gyftieTokenAccount, eosTokenAccount, gftOrderBookAccount;
 let member1, member2, member3, member4, member5, member6, member7, member8, member9, member10, gyftiegyftie;
+let member11, member12, member13, member14, member15;
 
 async function assetToFloat(assetStr, precision) {
     if (typeof precision === "undefined") {
@@ -131,6 +132,12 @@ describe("Gyftie Testing", function() {
     member9 = accounts[13];
     member10 = accounts [14];
 
+    member11 = accounts[15];
+    member12 = accounts[16];
+    member13 = accounts[17];
+    member14 = accounts[18];
+    member15 = accounts[19];
+
     console.log(" Gyftie Account        : ", gyftieTokenAccount.name);
     console.log(" EOS Token Account     : ", eosTokenAccount.name);
     console.log(" GFT Orderbook         : ", gftOrderBookAccount.name);
@@ -146,7 +153,12 @@ describe("Gyftie Testing", function() {
     console.log(" Member 8              : ", member8.name);
     console.log(" Member 9              : ", member9.name);
     console.log(" Member 10             : ", member10.name);
-    
+    console.log(" Member 11             : ", member11.name);
+    console.log(" Member 12             : ", member12.name);
+    console.log(" Member 13             : ", member13.name);
+    console.log(" Member 14             : ", member14.name);
+    console.log(" Member 15             : ", member15.name);
+
     await gyftieTokenAccount.addPermission(
         gyftieTokenAccount.name,
       "active",
@@ -428,7 +440,7 @@ describe("Gyftie Testing", function() {
 
     await gyftieTokenContract.createprof (member10.name, { from: gyftieOracle});
 
-    await gyftieTokenContract.isstoskoracl (member10.name, "2.00000000 GFT", "Claim SMS tokens", {from: member10 });
+    await gyftieTokenContract.isstoskoracl (member10.name, "2.00000000 GFT", "Claim SMS tokens", {from: gyftieOracle });
 
     const member10profile = await getProfile (member10);
     console.log (member10profile);
@@ -447,12 +459,56 @@ describe("Gyftie Testing", function() {
   //   assert.equal (member10profile.staked_balance, "2.00000000 GFT");
   // });
 
-  it('TEST 10 :::: It should create a profile and issue tokens to stake', async () => {
+  it('TEST 10 :::: Handle some basic member promotions', async () => {
 
-    await gyftieTokenContract.addlock (member8.name, { from: member8 });
+    await gyftieTokenContract.setrank (member1.name, 1, { from: gyftieTokenAccount });
+    await gyftieTokenContract.voteforuser (member1.name, member2.name, { from: member1 });
+
+    await gyftieTokenContract.createprof (member3.name, { from: gyftieOracle });
+    await gyftieTokenContract.voteforuser (member2.name, member3.name, { from: member2 });
+
+    const member1Profile = await getProfile (member1);
+    const member2Profile = await getProfile (member2);
+    const member3Profile = await getProfile (member3);
+
+    console.log("Member 1 Profile: ", member1Profile);
+    console.log("Member 2 Profile: ", member2Profile);
+    console.log("Member 3 Profile: ", member3Profile);
+
+    assert.equal (member1Profile.rank, 1);
+    assert.equal (member2Profile.rank, 1);
+    assert.equal (member3Profile.rank, 2);
     
-    const member8profile = await getProfile (member10);
-    console.log (member8profile);
+  });
+
+  it('TEST 11 :::: Handle some advanced member promotions', async () => {
+
+    await gyftieTokenContract.createprof (member11.name, { from: gyftieOracle });
+    await gyftieTokenContract.setrank (member11.name, 5, { from: gyftieTokenAccount });
+
+    await gyftieTokenContract.createprof (member12.name, { from: gyftieOracle });
+    await gyftieTokenContract.setrank (member12.name, 5, { from: gyftieTokenAccount });
+
+    await gyftieTokenContract.createprof (member13.name, { from: gyftieOracle });
+    await gyftieTokenContract.setrank (member13.name, 5, { from: gyftieTokenAccount });
+
+    await gyftieTokenContract.createprof (member14.name, { from: gyftieOracle });
+    await gyftieTokenContract.setrank (member14.name, 5, { from: gyftieTokenAccount });
+
+    await gyftieTokenContract.createprof (member15.name, { from: gyftieOracle });
+    await gyftieTokenContract.setrank (member15.name, 5, { from: gyftieTokenAccount });
+
+    await gyftieTokenContract.voteforuser (member11.name, member6.name, { from: member11 });
+    await gyftieTokenContract.voteforuser (member12.name, member6.name, { from: member12 });
+    await gyftieTokenContract.voteforuser (member13.name, member6.name, { from: member13 });
+
+    const member6Profile = await getProfile (member6);
+    // const member2Profile = await getProfile (member2);
+    // const member3Profile = await getProfile (member3);
+
+    console.log("Member 6 Profile: ", member6Profile);
+    // console.log("Member 2 Profile: ", member2Profile);
+    // console.log("Member 3 Profile: ", member3Profile);
     
   });
 

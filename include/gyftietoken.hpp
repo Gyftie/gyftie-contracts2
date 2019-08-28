@@ -59,7 +59,7 @@ CONTRACT gyftietoken : public contract
     ACTION upgrade (const name& account);
     ACTION reset ();
     ACTION smsverify (const name& account); 
-    ACTION remv2profs();
+    // ACTION remv2profs();
 
     //  Token Actions
     ACTION create();
@@ -100,7 +100,7 @@ CONTRACT gyftietoken : public contract
     //   Profile and Reputation Actions
     ACTION setrank (const name account, const uint64_t rank);
     ACTION promoteuser (const name account);
-    ACTION voteforuser (const name voter, const name profile, const uint8_t vote);
+    ACTION voteforuser (const name voter, const name profile);
     ACTION addrating(const name rater, const name ratee, const uint8_t rating);
 
     //  Badge Actions
