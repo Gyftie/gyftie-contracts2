@@ -138,6 +138,8 @@ CONTRACT gyftietoken : public contract
     ACTION voteagainst(const name voter, const uint64_t proposal_id);
     ACTION unvoteprop(const name voter, const uint64_t proposal_id);
     ACTION removeprop(const uint64_t proposal_id);
+    ACTION archiveprops ();
+    ACTION clearprops ();
 
   private:
    

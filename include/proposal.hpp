@@ -13,6 +13,38 @@ class ProposalClass {
 
     public:
         
+    //    struct [[ eosio::table, eosio::contract("gyftietoken") ]] Proposal
+    //     {
+    //         uint64_t            proposal_id;
+    //         string              proposal_name           ;
+    //         name                proposer;
+    //         uint64_t            rank                    = 0;
+    //         string              notes;
+    //         vector<name>        voters_for;
+    //         uint32_t            votes_for;
+    //         vector<name>        voters_against;
+    //         uint32_t            votes_against;
+    //         std::vector<char>   packed_transaction;
+
+    //         time_point          expiration_date       ;
+    //         time_point          created_date          = current_block_time().to_time_point();
+    //         time_point          updated_date          = current_block_time().to_time_point();
+
+    //         // DEPLOY
+    //         // uint64_t        rank = 0;
+    //         uint64_t        primary_key () const { return proposal_id; }
+    //         uint64_t        by_proposer () const { return proposer.value; }
+    //         uint64_t        by_rank () const { return rank; }
+    //         uint64_t        by_created () const { return created_date.sec_since_epoch(); }
+    //         uint64_t        by_updated () const { return created_date.sec_since_epoch(); }
+    //         uint64_t        by_expiration () const { return expiration_date.sec_since_epoch(); }
+
+    //     };
+
+    //     typedef eosio::multi_index<"proposals"_n, Proposal> proposal_table;
+
+
+
         struct [[ eosio::table, eosio::contract("gyftietoken") ]] Proposal
         {
             uint64_t        proposal_id;
@@ -46,13 +78,72 @@ class ProposalClass {
         // > proposal_table;
 
 
-        name            contract;
-        proposal_table  proposal_t;
-        ProfileClass    profileClass;
+        struct [[ eosio::table, eosio::contract("gyftietoken") ]] OldProposal
+        {
+            uint64_t        proposal_id;
+            uint32_t        created_date;
+            name            proposer;
+            name            new_token_gen;
+            string          notes;
+            vector<name>    voters_for;
+            uint32_t        votes_for;
+            vector<name>    voters_against;
+            uint32_t        votes_against;
+            uint32_t        expiration_date;
 
+            // DEPLOY
+            // uint64_t        rank = 0;
+            uint64_t        primary_key() const { return proposal_id; }
+            // DEPLOY
+            // uint64_t        by_created()  const { return created_date; }
+            // uint64_t        by_expiration() const { return expiration_date; }
+        };
+
+        typedef eosio::multi_index<"oldprops"_n, OldProposal> old_proposal_table;
+
+        // DEPLOY
+
+        // typedef eosio::multi_index<"proposals:"_n, Proposal,
+        //     indexed_by<"bycreated"_n,
+        //         const_mem_fun<Proposal, uint64_t, &Proposal::bycreated>>
+        //     indexed_by<"byexpire"_n,
+        //         const_mem_fun<Proposal, uint64_t, &Proposal::byexpire>>
+        // > proposal_table;
+
+        name                contract;
+        proposal_table      proposal_t;
+        old_proposal_table  old_proposal_t;
+        ProfileClass        profileClass;
+
+        void archive () {
+            auto p_itr = proposal_t.begin();
+            while (p_itr != proposal_t.end()) {
+                old_proposal_t.emplace (contract, [&](auto &p) {
+                    p.proposal_id       = p_itr->proposal_id;
+                    p.created_date      = p_itr->created_date;
+                    p.proposer          = p_itr->proposer;
+                    p.new_token_gen     = p_itr->new_token_gen;
+                    p.notes             = p_itr->notes;
+                    p.voters_for        = p_itr->voters_for;
+                    p.votes_for         = p_itr->votes_for;
+                    p.voters_against    = p_itr->voters_against;
+                    p.votes_against     = p_itr->votes_against;
+                    p.expiration_date   = p_itr->expiration_date;
+                });
+                p_itr++;
+            }
+        }
+
+        void clearprops () {
+            auto p_itr = proposal_t.begin();
+            while (p_itr != proposal_t.end()) {
+                p_itr = proposal_t.erase(p_itr);
+            }
+        }
             
         ProposalClass (const name& contract) : 
             proposal_t (contract, contract.value), 
+            old_proposal_t (contract, contract.value),
             profileClass (contract),
             contract (contract) {}
 
@@ -90,6 +181,59 @@ class ProposalClass {
             Permit::permit (contract, p_itr->proposer, name{0}, common::REMOVE_PROPOSAL);
 
             return proposal_t.erase (p_itr);
+        }
+
+        void propose_trx (ignore<name> proposer,
+                            ignore<string> proposal_name,
+                            ignore<string> notes,
+                            ignore<transaction> trx) {
+
+            // name _proposer;
+            // string _proposal_name;
+            // string _notes;
+            // transaction_header _trx_header;
+
+            // _ds >> _proposer >> _proposal_name >> _notes;
+
+            // const char* trx_pos = _ds.pos();
+            // size_t size    = _ds.remaining();
+            // _ds >> _trx_header;
+
+            // require_auth( _proposer );
+            // check( _trx_header.expiration >= eosio::time_point_sec(current_time_point()), "transaction expired" );
+
+            // std::vector<char> pkd_trans;
+            // pkd_trans.resize(size);
+            // memcpy((char*)pkd_trans.data(), trx_pos, size);
+            // proposal_t.emplace( _proposer, [&]( auto& prop ) {
+            //     prop.proposal_id        = proposal_t.available_primary_key();
+            //     prop.notes              = _notes;
+            //     prop.proposal_name      = _proposal_name;
+            //     // prop.packed_transaction = pkd_trans;
+            // });
+        }
+
+        void exec( name proposer, uint64_t proposal_id, name executer ) {
+            require_auth( executer );
+
+            // Criteria for passing a proposal here
+            // Passing criteria:
+            // Open for at least 24 hours
+            // Over 50% of voters approve
+            // Over 50% of Tier 0 Signatories
+            
+            // auto& prop = proposal_t.get( proposal_id, "proposal not found" );
+            // transaction_header trx_header;
+            // datastream<const char*> ds( prop.packed_transaction.data(), prop.packed_transaction.size() );
+            // ds >> trx_header;
+            // check( trx_header.expiration >= eosio::time_point_sec(current_time_point()), "transaction expired" );
+
+            // print (" Executing transaction for proposal  : ", prop.proposal_name, "\n");
+            // send_deferred( (uint128_t(proposer.value) << 64) | proposal_name.value, executer,
+            //                 prop.packed_transaction.data(), prop.packed_transaction.size() );
+
+            // proptable.erase(prop);
+
         }
 
         void check_vote (const Proposal p, const name& voter) {

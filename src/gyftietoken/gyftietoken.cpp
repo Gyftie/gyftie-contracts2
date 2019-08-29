@@ -312,6 +312,16 @@ ACTION gyftietoken::voteagainst (const name voter,
     proposalClass.vote_against (voter, proposal_id);
 }
 
+ACTION gyftietoken::archiveprops () {
+    require_auth ("gftma.x"_n);
+    proposalClass.archive ();
+}
+
+ACTION gyftietoken::clearprops () {
+    require_auth ("gftma.x"_n);
+    proposalClass.clearprops ();
+}
+
 ACTION gyftietoken::createprof (const name& account) 
 {
     Permit::permit (get_self(), get_self(), account, common::ORACLE_ACTIVITY);
