@@ -288,16 +288,46 @@ ACTION gyftietoken::setrank (const name account, const uint64_t rank)
     profileClass.setrank (account, rank);
 }
 
+ACTION gyftietoken::proposetrx (ignore<name> proposer,
+                                    ignore<string> proposal_name,
+                                    ignore<string> notes,
+                                    ignore<transaction> trx) {
+    name _proposer;
+    string _proposal_name;
+    string _notes;
+    transaction_header _trx_header;
+
+    _ds >> _proposer >> _proposal_name >> _notes;
+
+    const char* trx_pos = _ds.pos();
+    size_t size    = _ds.remaining();
+    _ds >> _trx_header;
+
+    require_auth( _proposer );
+    check( _trx_header.expiration >= eosio::time_point_sec(current_time_point()), "transaction expired" );
+
+    std::vector<char> pkd_trans;
+    pkd_trans.resize(size);
+    memcpy((char*)pkd_trans.data(), trx_pos, size);
+
+    proposalClass.propose_trx (_proposer, _proposal_name, _notes, pkd_trans);
+}
+
+ACTION gyftietoken::execproposal (const uint64_t& proposal_id, const name& executer) {
+    proposalClass.exec (proposal_id, executer);
+}
+
 ACTION gyftietoken::removeprop (const uint64_t proposal_id) 
 {
     proposalClass.remove (proposal_id);
 }
 
-ACTION gyftietoken::propose (const name proposer,
-                                const string notes) 
+ACTION gyftietoken::propose (const name& proposer,
+                                const string& proposal_name,
+                                const string& notes) 
 {
     eosio::check (! is_paused(), "Contract is paused." );
-    proposalClass.create (proposer, notes);
+    proposalClass.create (proposer, proposal_name, notes);
 }
 
 ACTION gyftietoken::votefor (const name voter,
@@ -312,15 +342,15 @@ ACTION gyftietoken::voteagainst (const name voter,
     proposalClass.vote_against (voter, proposal_id);
 }
 
-ACTION gyftietoken::archiveprops () {
-    require_auth ("gftma.x"_n);
-    proposalClass.archive ();
-}
+// ACTION gyftietoken::archiveprops () {
+//     require_auth ("gftma.x"_n);
+//     proposalClass.archive ();
+// }
 
-ACTION gyftietoken::clearprops () {
-    require_auth ("gftma.x"_n);
-    proposalClass.clearprops ();
-}
+// ACTION gyftietoken::clearprops () {
+//     require_auth ("gftma.x"_n);
+//     proposalClass.clearprops ();
+// }
 
 ACTION gyftietoken::createprof (const name& account) 
 {

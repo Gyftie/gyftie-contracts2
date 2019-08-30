@@ -132,14 +132,20 @@ CONTRACT gyftietoken : public contract
     ACTION unlock (const name account_to_unlock, const string note);
 
     //   Proposal Actions
-    ACTION propose(const name proposer, const string notes);
+    ACTION propose(const name& proposer, const string& proposal_name, const string& notes);
+    ACTION proposetrx (ignore<name> proposer,
+                        ignore<string> proposal_name,
+                        ignore<string> notes,
+                        ignore<transaction> trx);
+    ACTION execproposal (const uint64_t& proposal_id, const name& executer);
+
     //ACTION promoteprop (const uint64_t proposal_id);
     ACTION votefor(const name voter, const uint64_t proposal_id);
     ACTION voteagainst(const name voter, const uint64_t proposal_id);
     ACTION unvoteprop(const name voter, const uint64_t proposal_id);
     ACTION removeprop(const uint64_t proposal_id);
-    ACTION archiveprops ();
-    ACTION clearprops ();
+    // ACTION archiveprops ();
+    // ACTION clearprops ();
 
   private:
    
