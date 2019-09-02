@@ -74,8 +74,6 @@ class ProposalClass {
 
         // typedef eosio::multi_index<"proposals"_n, Proposal> proposal_table;
 
-        // // DEPLOY
-
         struct [[ eosio::table, eosio::contract("gyftietoken") ]] OldProposal
         {
             uint64_t        proposal_id;
@@ -89,12 +87,7 @@ class ProposalClass {
             uint32_t        votes_against;
             uint32_t        expiration_date;
 
-            // DEPLOY
-            // uint64_t        rank = 0;
             uint64_t        primary_key() const { return proposal_id; }
-            // DEPLOY
-            // uint64_t        by_created()  const { return created_date; }
-            // uint64_t        by_expiration() const { return expiration_date; }
         };
 
         typedef eosio::multi_index<"oldprops"_n, OldProposal> old_proposal_table;
@@ -188,17 +181,17 @@ class ProposalClass {
             // Over 50% of voters approve
             // Over 50% of Tier 0 Signatories
             
-            auto& prop = proposal_t.get( proposal_id, "proposal not found" );
-            transaction_header trx_header;
-            datastream<const char*> ds( prop.packed_transaction.data(), prop.packed_transaction.size() );
-            ds >> trx_header;
-            check( trx_header.expiration >= eosio::time_point_sec(current_time_point()), "transaction expired" );
+            // auto& prop = proposal_t.get( proposal_id, "proposal not found" );
+            // transaction_header trx_header;
+            // datastream<const char*> ds( prop.packed_transaction.data(), prop.packed_transaction.size() );
+            // ds >> trx_header;
+            // check( trx_header.expiration >= eosio::time_point_sec(current_time_point()), "transaction expired" );
 
-            print (" Executing transaction for proposal  : ", prop.proposal_name, "\n");
-            send_deferred( current_block_time().to_time_point().sec_since_epoch() + prop.proposal_id, executer,
-                            prop.packed_transaction.data(), prop.packed_transaction.size() );
+            // print (" Executing transaction for proposal  : ", prop.proposal_name, "\n");
+            // send_deferred( current_block_time().to_time_point().sec_since_epoch() + prop.proposal_id, executer,
+            //                 prop.packed_transaction.data(), prop.packed_transaction.size() );
 
-            proposal_t.erase(prop);
+            // proposal_t.erase(prop);
         }
 
         void check_vote (const Proposal p, const name& voter) {
