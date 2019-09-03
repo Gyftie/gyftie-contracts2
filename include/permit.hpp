@@ -16,20 +16,6 @@ using namespace common;
 class Permit {
 
     public: 
-    // static const int    ANY                         =   0;
-    // static const int    GYFT                        =   1;
-    // static const int    VOTE                        =   2;
-    // static const int    CHALLENGE                   =   3;
-    // static const int    VALIDATE                    =   4;
-    // static const int    PROPOSE                     =   5;
-    // static const int    TRANSFER                    =   6;
-    // static const int    REMOVE_PROPOSAL             =   7;
-    // static const int    ANY_SIGNATORY               =   8;
-    // static const int    AUTH_ACTIVITY               =   9;
-    // static const int    LOCK_ACTIVITY               =   10;
-    // static const int    ORACLE_ACTIVITY             =   11;
-    // static const int    SELFORSIGNATORY_ACTIVITY    =   12;
-    // static const int    SELLGFT_ACTIVITY            =   13;
 
     struct [[ eosio::table, eosio::contract("gyftietoken") ]] signatory
     {
@@ -57,9 +43,6 @@ class Permit {
 
         return s_t.erase (s_itr);
     }
-
-    //static name _contract;
-    //static signatory_table signatory_t;
 
     class Activity {
 
@@ -228,13 +211,7 @@ class Permit {
     };
     
     static void permit  (const name& contract, const name& account, const name& receiver, const int& permission) {
-        print (" Permit :: permit, permission : ", std::to_string(permission), "\n");
-        print (" Contract : ", contract.to_string(), "\n");
-        print (" Account : ", account.to_string(), "\n");
-        // print (" Permit.LOCK_ACTIVITY: ", std::to_string(Permit.LOCK_ACTIVITY), "\n");
-        print (" Permit::LOCK_ACTIVITY: ", std::to_string(common::LOCK_ACTIVITY), "\n");
-
-        print (" Permit::ANY_SIGNATORY: ", std::to_string(common::ANY_SIGNATORY), "\n");
+        
         switch (permission) {
             case common::ANY:
                 Activity::permit (contract, account, receiver);
@@ -246,7 +223,7 @@ class Permit {
                 ValidateActivity::permit (contract, account, receiver);
                 break;
             case common::PROPOSE:
-                Activity::permit (contract, account, receiver);
+                AuthActivity::permit (contract, account);
                 break;
             case common::TRANSFER:
                 Activity::permit (contract, account, receiver);

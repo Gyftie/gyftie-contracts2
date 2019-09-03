@@ -8,7 +8,7 @@
 #include <algorithm>    // std::min
 
 #include "common.hpp"
-// #include "gyftie.hpp"
+// #include "permit.hpp"
 
 using std::string;
 using std::vector;
@@ -126,15 +126,14 @@ class ProfileClass
       referral_t (contract, contract.value),
       contract (contract) {}
 
-    iterator<std::bidirectional_iterator_tag, const ProfileClass::Profile2> 
-    create (const name& account) {
+    void create (const name& account) {
       check (profile_t.find (account.value) == profile_t.end(), "Account " + 
           account.to_string() + " already has a Gyftie profile - table 1.");
 
       check (profile2_t.find (account.value) == profile2_t.end(), "Account " + 
           account.to_string() + " already has a Gyftie profile - table 2.");
 
-      return profile2_t.emplace (contract, [&](auto &p) {
+      profile2_t.emplace (contract, [&](auto &p) {
           p.account = account;
           p.gft_balance = asset {0, common::S_GFT};
           p.unstaking_balance = asset {0, common::S_GFT};
@@ -144,15 +143,14 @@ class ProfileClass
       });         
     }
 
-    iterator<std::bidirectional_iterator_tag, const ProfileClass::Profile2> 
-    create (const name& account, const string& idhash, const string& id_expiration) {
+    void create (const name& account, const string& idhash, const string& id_expiration) {
       check (profile_t.find (account.value) == profile_t.end(), "Account " + 
           account.to_string() + " already has a Gyftie profile - table 1.");
 
       check (profile2_t.find (account.value) == profile2_t.end(), "Account " + 
           account.to_string() + " already has a Gyftie profile - table 2.");
 
-      return profile2_t.emplace (contract, [&](auto &p) {
+      profile2_t.emplace (contract, [&](auto &p) {
           p.account = account;
           p.idhash = idhash;
           p.id_expiration = id_expiration;
@@ -250,7 +248,6 @@ class ProfileClass
         return false;
       }
       return true;
-      // return profile2_t.find (account.value) != profile2_t.end();
     }
 
     bool exists (const name& account) {
@@ -414,21 +411,14 @@ class ProfileClass
       } 
     }
 
-    // only for testing
-    // void removeAllV2 () {
-    //   auto p_itr = profile2_t.begin();
-    //   while (p_itr != profile2_t.end()) {
-    //     p_itr = profile2_t.erase (p_itr);
-    //   }
-    // }
 
     // ****   SIGNATORY RANK FUNCTIONS **** 
-
     void vote_to_promote_profile (const name& voter, const name& profile_to_promote) {
+
       upgrade (voter);
       upgrade (profile_to_promote);
 
-      require_auth (voter);
+      // Permit::permit (contract, voter, profile_to_promote, common::AUTH_ACTIVITY);
 
       auto voter_itr = profile2_t.find (voter.value);
       check (voter_itr != profile2_t.end(), "Voting account does not have a profile: " + voter.to_string());
@@ -459,6 +449,35 @@ class ProfileClass
           rank_set.insert (profile2_t.get(voter.value).rank);
       }
       return rank_set;
+    }
+
+    void unvote_to_promote_profile (const name& voter, const name& profile_to_unpromote) {
+      upgrade (voter);
+      upgrade (profile_to_unpromote);
+
+      // Permit::permit (contract, voter, profile_to_unpromote, common::AUTH_ACTIVITY);
+
+      auto voter_itr = profile2_t.find (voter.value);
+      check (voter_itr != profile2_t.end(), "Voting account does not have a profile: " + voter.to_string());
+
+      auto prof_to_unpromote_itr = profile2_t.find (profile_to_unpromote.value);
+      check (prof_to_unpromote_itr != profile2_t.end(), "Account to un-promote does not have a profile: " + profile_to_unpromote.to_string());
+    
+      profile2_t.modify (voter_itr, contract, [&](auto& p) {
+        p.profiles_this_profile_voted_for.erase (std::remove(p.profiles_this_profile_voted_for.begin(),
+                                                             p.profiles_this_profile_voted_for.end(),
+                                                             profile_to_unpromote),
+                                                  p.profiles_this_profile_voted_for.end());
+        p.updated_date = current_block_time().to_time_point();
+      });
+
+      profile2_t.modify (prof_to_unpromote_itr, contract, [&](auto& p) {
+        p.promotion_votes_for_this_profile.erase (std::remove(p.promotion_votes_for_this_profile.begin(),
+                                                             p.promotion_votes_for_this_profile.end(),
+                                                             profile_to_unpromote),
+                                                  p.promotion_votes_for_this_profile.end());
+        p.updated_date = current_block_time().to_time_point();
+      });
     }
 
     uint64_t get_next_strongest_rank (const uint64_t& rank) {

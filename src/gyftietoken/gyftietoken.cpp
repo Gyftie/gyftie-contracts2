@@ -1,18 +1,34 @@
 #include <gyftietoken.hpp>
 
-ACTION gyftietoken::promoteuser (const name account){
-}
-
 ACTION gyftietoken::voteforuser (const name voter, const name profile) {
     profileClass.vote_to_promote_profile (voter, profile);
 }
 
-ACTION gyftietoken::addrating(const name rater, const name ratee, const uint8_t rating) {
-
+ACTION gyftietoken::unvoteuser (const name voter, const name profile) {
+    profileClass.unvote_to_promote_profile (voter, profile);
 }
 
 ACTION gyftietoken::unvoteprop(const name voter, const uint64_t proposal_id){
 
+}
+
+ACTION gyftietoken::addcomment (const name& commenter, 
+                            const name& comment_type, 
+                            const uint64_t& proposal_id,    // -1 for no proposal
+                            const name& profile,            // "noprofile"_n for no profile
+                            const uint64_t& parent_id, 
+                            const string& comment_text) {
+
+    commentClass.add_comment (commenter, comment_type, proposal_id,
+                                profile, parent_id, comment_text);
+}
+
+ACTION gyftietoken::remcomment (const uint64_t& comment_id) {
+    commentClass.remove_comment (comment_id);
+}
+
+ACTION gyftietoken::editcomment (const uint64_t& comment_id, const string& comment_text) {
+    commentClass.edit_comment (comment_id, comment_text);
 }
 
 ACTION gyftietoken::chgthrottle (const uint32_t throttle)
@@ -33,15 +49,15 @@ ACTION gyftietoken::xferzj ()
 //     profileClass.removeAllV2();
 // }
 
-ACTION gyftietoken::backupprofs (const name& profile) {
-    require_auth ("gftma.x"_n);
-    migration.backupprofs (profile);
-}
+// ACTION gyftietoken::backupprofs (const name& profile) {
+//     require_auth ("gftma.x"_n);
+//     migration.backupprofs (profile);
+// }
 
-ACTION gyftietoken::restoreprofs (const name& profile) {
-    require_auth ("gftma.x"_n);
-    migration.restoreprofs (profile);
-}
+// ACTION gyftietoken::restoreprofs (const name& profile) {
+//     require_auth ("gftma.x"_n);
+//     migration.restoreprofs (profile);
+// }
 
 ACTION gyftietoken::referuser (const name& referrer, const name& account_to_refer) {
     require_auth (account_to_refer);

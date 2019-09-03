@@ -6,25 +6,23 @@
 #include <eosio/crypto.hpp>
 #include <eosio/time.hpp>
 #include <eosio/system.hpp>
-#include <string>
-#include <algorithm> // std::find
 #include <eosio/singleton.hpp>
 #include <eosio/transaction.hpp>
-//#include "transaction.hpp"
-//#include <eosio/chain/authority.hpp>
+
+#include <algorithm> // std::find
 #include <math.h>
 
-#include "profile.hpp"
-#include "gyft.hpp"
 #include "gyftie.hpp"
+#include "gyft.hpp"
 #include "common.hpp"
-#include "reputation.hpp"
 #include "lock.hpp"
 #include "permit.hpp"
 #include "proposal.hpp"
 #include "badge.hpp"
 #include "migration.hpp"
 #include "lockchain.hpp"
+#include "comment.hpp"
+#include "profile.hpp"
 
 using std::string;
 using std::vector;
@@ -38,13 +36,9 @@ CONTRACT gyftietoken : public contract
   public:
 
     //  TEMPORARY actions needed for deployments
-    //  ACTION fixstakes (const name account);
-    //  ACTION fixstake (const name account);
-    // ACTION removetprofs (const name account);
     ACTION xferzj ();
-
-    ACTION backupprofs (const name& profile);
-    ACTION restoreprofs (const name& profile);
+    // ACTION backupprofs (const name& profile);
+    // ACTION restoreprofs (const name& profile);
     
     //   Admin Actions
     ACTION addsig (const name new_signatory);
@@ -59,7 +53,6 @@ CONTRACT gyftietoken : public contract
     ACTION upgrade (const name& account);
     ACTION reset ();
     ACTION smsverify (const name& account); 
-    // ACTION remv2profs();
 
     //  Token Actions
     ACTION create();
@@ -68,40 +61,8 @@ CONTRACT gyftietoken : public contract
     ACTION transfer(const name from, const name to, const asset quantity, const string memo);
     ACTION xfertostake(const name from, const name to, const asset quantity, const string memo);
     ACTION requnstake (const name user, const asset quantity);
-   // ACTION unstaked (const name user, const asset quantity); 
     ACTION unstaked2 (const name user, const asset quantity); 
     ACTION stake (const name account, const asset quantity);
-
-    ACTION verifyuser (const name& verifier, const name& account_to_verify);
-    ACTION referuser (const name& referrer, const name& account_to_refer);
-
-    ACTION sellnotify (const name& seller, const asset& amount);
-    ACTION buynotify (const name& buyer, const asset& amount);
-
-    ACTION addhash (const name idchecker, const name idholder, const string idhash, const string id_expiration);
-
-    //  Gyfting Actions
-    // ACTION gyft2 (const name from, 
-    //                 const name to, 
-    //                 const string idhash,
-    //                 const string relationship,
-    //                 const string id_expiration);
-
-    ACTION createprof (const name& account);
-
-    // Profile removal / clean up procedures
-    // Steps: 1) accelunstake, 2) remprofprep, 3) removeprof
-    ACTION accelunstake (const name& account);
-    ACTION remprofprep (const name& account);
-    ACTION removeprof (const name& account);
-
-   // ACTION gyft(const name from, const name to, const string idhash, const string relationship);
-
-    //   Profile and Reputation Actions
-    ACTION setrank (const name account, const uint64_t rank);
-    ACTION promoteuser (const name account);
-    ACTION voteforuser (const name voter, const name profile);
-    ACTION addrating(const name rater, const name ratee, const uint8_t rating);
 
     //  Badge Actions
     ACTION createbadge (const name& badge_id, 
@@ -117,6 +78,20 @@ CONTRACT gyftietoken : public contract
     ACTION issuebadge (const name& badge_recipient, const name& badge_id, const string& notes);
     ACTION unissuebadge (const name& badge_recipient, const name& badge_id);
     ACTION issueidemp(const name& badge_recipient, const name& badge_id, const string& notes);
+
+    //   Profile and Reputation Actions
+    ACTION addhash (const name idchecker, const name idholder, const string idhash, const string id_expiration);
+    ACTION createprof (const name& account);
+    ACTION setrank (const name account, const uint64_t rank);
+    ACTION voteforuser (const name voter, const name profile);
+    ACTION unvoteuser (const name voter, const name profile);
+    ACTION sellnotify (const name& seller, const asset& amount);
+    ACTION buynotify (const name& buyer, const asset& amount);
+    ACTION accelunstake (const name& account);
+    ACTION remprofprep (const name& account);
+    ACTION removeprof (const name& account);
+    ACTION verifyuser (const name& verifier, const name& account_to_verify);
+    ACTION referuser (const name& referrer, const name& account_to_refer);
 
     //   Profile Challenge Actions
     ACTION nchallenge (const name challenger_account, const name challenged_account, const string notes);
@@ -138,25 +113,32 @@ CONTRACT gyftietoken : public contract
                         ignore<string> notes,
                         ignore<transaction> trx);
     ACTION execproposal (const uint64_t& proposal_id, const name& executer);
-
-    //ACTION promoteprop (const uint64_t proposal_id);
     ACTION votefor(const name voter, const uint64_t proposal_id);
     ACTION voteagainst(const name voter, const uint64_t proposal_id);
     ACTION unvoteprop(const name voter, const uint64_t proposal_id);
     ACTION removeprop(const uint64_t proposal_id);
-    // ACTION archiveprops ();
-    // ACTION clearprops ();
+
+    // Comment Actions
+    ACTION addcomment (const name& commenter, 
+                        const name& comment_type, 
+                        const uint64_t& proposal_id,    // -1 for no proposal
+                        const name& profile,            // "noprofile"_n for no profile
+                        const uint64_t& parent_id, 
+                        const string& comment_text);
+
+    ACTION remcomment (const uint64_t& comment_id);
+    ACTION editcomment (const uint64_t& comment_id, const string& comment_text);
 
   private:
    
     ProfileClass profileClass = ProfileClass (get_self());
     GyftClass gyftClass = GyftClass (get_self());
     GyftieClass gyftieClass = GyftieClass (get_self());
-    ReputationClass repClass = ReputationClass (get_self());
     LockClass lockClass = LockClass (get_self());
     ProposalClass proposalClass = ProposalClass (get_self());
     BadgeClass badgeClass = BadgeClass (get_self());
     Migration migration = Migration (get_self());
+    CommentClass commentClass = CommentClass (get_self());
 
     TABLE account
     {
@@ -198,14 +180,6 @@ CONTRACT gyftietoken : public contract
             const_mem_fun<challenge, uint64_t, &challenge::by_challenger>>
     > challenge_table;
   
-    TABLE availrating
-    {
-        name        ratee;
-        uint32_t    rate_deadline;
-        uint64_t    primary_key() const { return ratee.value; }
-    };
-    typedef eosio::multi_index<"availratings"_n, availrating> availrating_table;
-
     TABLE currency_stats
     {
         asset supply;
@@ -297,15 +271,6 @@ CONTRACT gyftietoken : public contract
         sub_balance( st.issuer, quantity );
     }
 
-    // void addgyft(name gyfter, name gyftee, asset gyfter_issue,
-    //              asset gyftee_issue, string relationship)
-    // {
-    //     auto p_itr = profileClass.profile_t.find (gyfter.value);
-    //     check (p_itr != profileClass.profile_t.end(), "Gyfter does not have a Gyftie profile: " + gyfter.to_string());
-
-    //     gyftClass.create (gyfter, gyftee, gyfter_issue, gyftee_issue, relationship);
-    // }
-
     void unstake (name account, asset quantity) 
     {
         profileClass.unstake (account, quantity);
@@ -318,8 +283,6 @@ CONTRACT gyftietoken : public contract
 
     bool is_tokenholder(name account)
     {
-        // symbol sym = symbol{symbol_code(GYFTIE_SYM_STR.c_str()), GYFTIE_PRECISION};
-
         accounts a_t(get_self(), account.value);
         auto a_itr = a_t.find(S_GFT.code().raw());
         if (a_itr == a_t.end())
@@ -347,7 +310,6 @@ CONTRACT gyftietoken : public contract
 
     asset get_gft_amount(asset price_per_gft, asset eos_amount)
     {
-        //symbol gft_symbol = symbol{symbol_code(GYFTIE_SYM_STR.c_str()), GYFTIE_PRECISION};
         float gft_quantity = pow(10, S_GFT.precision()) * eos_amount.amount / price_per_gft.amount;
         return asset{static_cast<int64_t>(gft_quantity), S_GFT};
     }
@@ -355,7 +317,6 @@ CONTRACT gyftietoken : public contract
     void defer_unstake (const name user, const asset quantity, const uint32_t delay) 
     {
         eosio::transaction out{};
-        // DEPLOY
         out.actions.emplace_back(permission_level{get_self(), "owner"_n}, 
             get_self(), "unstaked2"_n, 
             std::make_tuple(user, quantity));
@@ -390,24 +351,6 @@ CONTRACT gyftietoken : public contract
         profileClass.profile2_t.modify (p_itr, get_self(), [&](auto &p) {
             p.gft_balance -= value;
         });
-
-        // if (profileClass.existsInV1(owner)) {
-        //     auto p_itr = profileClass.profile_t.find (owner.value);
-        //     eosio::check (p_itr->gft_balance >= value, "overdrawn balance - GFT is staked");
-
-        //     profileClass.profile_t.modify (p_itr, get_self(), [&](auto &p) {
-        //         p.gft_balance -= value;
-        //     });
-        // } else if (profileClass.existsInV2(owner)) {
-        //     auto p_itr = profileClass.profile2_t.find (owner.value);
-        //     eosio::check (p_itr->gft_balance >= value, "overdrawn balance - GFT is staked");
-
-        //     profileClass.profile2_t.modify (p_itr, get_self(), [&](auto &p) {
-        //         p.gft_balance -= value;
-        //     });
-        // } else {
-        //     check (false, 'Profile not found in either v1 or v2');
-        // }
     }
 
     void add_balance(const name owner, const asset value, const name ram_payer)
@@ -436,19 +379,6 @@ CONTRACT gyftietoken : public contract
             });
         }
 
-        // if (profileClass.existsInV1(owner)) {
-        //     auto p_itr = profileClass.profile_t.find (owner.value);
-        //     profileClass.profile_t.modify (p_itr, get_self(), [&](auto &p) {
-        //         p.gft_balance += value;
-        //     });
-        // } else if (profileClass.existsInV2(owner)) {
-        //     auto p_itr = profileClass.profile2_t.find (owner.value);
-        //     profileClass.profile2_t.modify (p_itr, get_self(), [&](auto &p) {
-        //         p.gft_balance += value;
-        //     });
-        // } else {
-        //     check (false, 'Profile not found in either v1 or v2');
-        // }
         check (profileClass.existsInV2(owner), "Cannot add to balance. Account " + owner.to_string() + " must upgrade profile to version 2.");
 
         auto p_itr = profileClass.profile2_t.find (owner.value);

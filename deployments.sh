@@ -22,8 +22,8 @@ cleos -u https://api.eosnewyork.io multisig approve gftma.x setconfig '{"actor":
 
 
 cleos -u https://api.eosnewyork.io set contract -sjd -x 186400 gyftietokens gyftie/gyftietoken/ > gyftietoken_deploy.json
-cleos -u https://api.eosnewyork.io multisig propose_trx redeploy2 '[{"actor": "gftma.x", "permission": "active"}, {"actor": "danielflora3", "permission": "active"}]' ./gyftietoken_deploy.json gftma.x
-cleos -u https://api.eosnewyork.io  push action gyftmultisig addproposal '["gftma.x", "danielflora3", "redeploy2", "Too many changes to list - initial deployment of Gyftie 2.0", "https://github.com/gyftie/gyftie-contracts2/commit/0730bd33ff0d252d8f3eef718bec09e6cdfe3962"]' -p gftma.x
+cleos -u https://api.eosnewyork.io multisig propose_trx redeploy2 '[{"actor": "gftma.x", "permission": "active"}, {"actor": "amandarachel", "permission": "active"}]' ./gyftietoken_deploy.json gftma.x
+cleos -u https://api.eosnewyork.io  push action gyftmultisig addproposal '["gftma.x", "amandarachel", "redeploy2", "updated to the new proposal structure", "https://github.com/gyftie/gyftie-contracts2/commit/0904aaaf713de7c6a9c987aa3428490faa96ced0"]' -p gftma.x
 cleos -u https://api.eosnewyork.io multisig approve gftma.x redeploy2 '{"actor": "gftma.x", "permission": "active"}' -p gftma.x
 
 

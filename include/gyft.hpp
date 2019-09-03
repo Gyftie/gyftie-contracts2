@@ -52,20 +52,14 @@ class GyftClass {
             gyftieClass (contract),
             contract (contract) {}
 
-        // auto load (const uint64_t&  gyft_id) {
-        //     auto g_itr = gyft_t.find (gyft_id);
-        //     eosio::check (g_itr != gyft_t.end(), "Gyft event is not found.");
-        //     return *g_itr;
-        // }
-
-        iterator<std::bidirectional_iterator_tag, const Gyft> create (
+        void create (
             const name& gyfter, 
             const name& gyftee, 
             const asset& gyfter_issue,
             const asset& gyftee_issue, 
             const string& relationship) {
                         
-            return gyft_t.emplace(contract, [&](auto &g) {
+            gyft_t.emplace(contract, [&](auto &g) {
                 g.gyft_id       = gyft_t.available_primary_key();
                 g.gyfter        = gyfter;
                 g.gyftee        = gyftee;
