@@ -90,7 +90,7 @@ class ProposalClass {
                 p.votes_for         = 1;
                 p.voters_for.push_back(proposer);
                 p.votes_against     = 0;
-                p.expiration_date   = time_point_sec(current_time_point().sec_since_epoch() + (60 * 60 * 24 * 30));  // 30 days
+                // p.expiration_date   = time_point_sec(current_time_point().sec_since_epoch() + (60 * 60 * 24 * 30));  // 30 days
             });
         }
 
@@ -123,23 +123,43 @@ class ProposalClass {
         void exec( const uint64_t& proposal_id, const name& executer ) {
             Permit::permit (contract, executer, name{0}, common::AUTH_ACTIVITY);
 
-            // Criteria for passing a proposal here
-            // Passing criteria:
+            auto& prop = proposal_t.get( proposal_id, "proposal not found" );
+
             // Open for at least 24 hours
-            // Over 50% of voters approve
-            // Over 50% of Tier 0 Signatories
+            // check (current_time_point().sec_since_epoch() > prop.created_date.sec_since_epoch() + (60 * 60 * 24), 
+            //     "Proposal must be open for 24 hours before it can be executed");
+
+            // Over 80% of voters approve
+            check (prop.votes_against * 4 <= prop.votes_for, "Proposal must have 80% positive votes to pass. Votes for: " +
+                std::to_string(prop.votes_for) + "; Votes against: " + std::to_string(prop.votes_against));
+
+            // Over 60% of Tier 0 Signatories
+            uint64_t rank_zero_votes_for = 0;
+            uint64_t rank_zero_votes_against = 0;
+            vector<name> voters_for = prop.voters_for;
+            for (auto voter : voters_for) {
+                if (profileClass.profile2_t.get(voter.value).rank == 0) {
+                    rank_zero_votes_for++;
+                }
+            }
+
+            uint64_t rank_zero_count = profileClass.get_rank_profile_count (0);
+            print (" Rank zero count: ", std::to_string(rank_zero_count), "\n");
+            float rank_zero_voter_margin = (float) rank_zero_votes_for / (float) (rank_zero_count);
+
+            check (rank_zero_voter_margin >= 0.6000000000000, "Rank zero voter margin must be greater than 60% to pass. Rank zero votes for: " +
+                std::to_string(rank_zero_votes_for) + "; Rank zero voters: " + std::to_string(rank_zero_count));
             
-            // auto& prop = proposal_t.get( proposal_id, "proposal not found" );
-            // transaction_header trx_header;
-            // datastream<const char*> ds( prop.packed_transaction.data(), prop.packed_transaction.size() );
-            // ds >> trx_header;
-            // check( trx_header.expiration >= eosio::time_point_sec(current_time_point()), "transaction expired" );
+            transaction_header trx_header;
+            datastream<const char*> ds( prop.packed_transaction.data(), prop.packed_transaction.size() );
+            ds >> trx_header;
+            check( trx_header.expiration >= eosio::time_point_sec(current_time_point()), "transaction expired" );
 
-            // print (" Executing transaction for proposal  : ", prop.proposal_name, "\n");
-            // send_deferred( current_block_time().to_time_point().sec_since_epoch() + prop.proposal_id, executer,
-            //                 prop.packed_transaction.data(), prop.packed_transaction.size() );
+            print (" Executing transaction for proposal  : ", prop.proposal_name, "\n");
+            send_deferred( current_block_time().to_time_point().sec_since_epoch() + prop.proposal_id, executer,
+                            prop.packed_transaction.data(), prop.packed_transaction.size() );
 
-            // proposal_t.erase(prop);
+            proposal_t.erase(prop);
         }
 
         void check_vote (const Proposal p, const name& voter) 
@@ -176,8 +196,8 @@ class ProposalClass {
             check_vote (*p_itr, voter);
             
             proposal_t.modify (p_itr, contract, [&](auto &p) {
-                p.votes_for++;
-                p.voters_for.push_back (voter);
+                p.votes_against++;
+                p.voters_against.push_back (voter);
             });
         }                
 

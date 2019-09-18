@@ -181,7 +181,7 @@ class Permit {
             eosio::check (is_account (account), "Account is not a valid EOS account.");
 
             ProfileClass profileClass (contract);
-            eosio::check (profileClass.exists (account), "Account does not have a Gyftie profile.");
+            eosio::check (profileClass.existsInV2 (account), "Account does not have a V2 Gyftie profile.");
         }
     };
 

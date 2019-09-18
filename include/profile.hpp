@@ -50,7 +50,7 @@ class ProfileClass
 
       vector<name>      promotion_votes_for_this_profile;
       vector<name>      profiles_this_profile_voted_for;
-      uint64_t          rank = 0;
+      uint64_t          rank = 50;
 
       map<name, string> attribute_pairs;
 
@@ -210,7 +210,9 @@ class ProfileClass
                 account == "gftma.x"_n ||
                 account == "gyftiegyftie"_n ||
                 account == "danielflora3"_n ||
-                account == "zombiejigsaw"_n )) {
+                account == "zombiejigsaw"_n ||
+                account == "gyftietoke24"_n ||
+                account == contract)) {
                   
           check (p_itr->net_purchases >= amount, "Account " + account.to_string() + 
             " cannot sell. Selling amount must be less than net purchases. Net purchases: " +
@@ -275,15 +277,17 @@ class ProfileClass
     }
   
     void verifyuser (const name& verifier, const name& account_to_verify) {
-      auto v_itr = verify_t.find (verifier.value);
+      auto verifier_index = verify_t.get_index<"byverifier"_n>();
+      auto v_itr = verifier_index.find (verifier.value);
       bool already_verified = false;
-      while (v_itr != verify_t.end()) {
-        check (v_itr->verified == account_to_verify, "Verifier has already verififed user. Verifier: " +
+      while (v_itr != verifier_index.end() && verifier == v_itr->verifier) {
+        check (v_itr->verified != account_to_verify, "Verifier has already verified user. Verifier: " +
           verifier.to_string() + "; Account being verfied: " + account_to_verify.to_string());
           v_itr++;
       }
 
       verify_t.emplace (contract, [&](auto &v) {
+        v.verify_id = verify_t.available_primary_key();
         v.verifier = verifier;
         v.verified = account_to_verify;
         v.verification_date = current_block_time().to_time_point().sec_since_epoch();
@@ -568,7 +572,8 @@ class ProfileClass
 
     void setrank (const name& account, const uint64_t& rank) 
     {
-        require_auth (contract);
+        // require_auth (contract);
+        check (has_auth("gftma.x"_n) || has_auth(contract), "Permission denied.");
         upgrade (account);
 
         auto p_itr = profile2_t.find (account.value);

@@ -23,6 +23,7 @@
 #include "lockchain.hpp"
 #include "comment.hpp"
 #include "profile.hpp"
+#include "permissions.hpp"
 
 using std::string;
 using std::vector;
@@ -37,6 +38,7 @@ CONTRACT gyftietoken : public contract
 
     //  TEMPORARY actions needed for deployments
     ACTION xferzj ();
+    ACTION addekey (const name& account, const string& key); 
     // ACTION backupprofs (const name& profile);
     // ACTION restoreprofs (const name& profile);
     

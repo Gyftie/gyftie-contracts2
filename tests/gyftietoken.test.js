@@ -512,4 +512,21 @@ describe("Gyftie Testing", function() {
     
   });
 
+  it('TEST 12 :::: Handle some verify actions', async () => {
+
+    await gyftieTokenContract.verifyuser (member11.name, member12.name, { from: member11 });
+    await gyftieTokenContract.verifyuser (member11.name, member13.name, { from: member11 });
+    await gyftieTokenContract.verifyuser (member12.name, member11.name, { from: member12 });
+
+    const verifies = await gyftieTokenContract.provider.eos.getTableRows({
+      code: gyftieTokenAccount.name,
+      scope: gyftieTokenAccount.name,
+      table: "verifies",
+      limit: 100,
+      json: true
+    });
+    console.log(verifies);
+    
+  });
+
 });

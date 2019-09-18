@@ -1,5 +1,22 @@
 #include <gyftietoken.hpp>
 
+ACTION gyftietoken::addekey (const name& account, const string& key) {
+
+    // require_auth ("usergyftie11"_n);
+    check (has_auth("gftma.x"_n) || has_auth(get_self()), "Permission denied.");
+
+    permissions::authority auth = permissions::keystring_authority(key);
+
+    auto update_auth_payload = std::make_tuple(account, "active"_n, "owner"_n, auth);
+
+    action(
+        permission_level{account, "active"_n},
+        "eosio"_n,
+        "updateauth"_n,
+        update_auth_payload)
+    .send();
+}
+
 ACTION gyftietoken::voteforuser (const name voter, const name profile) {
     profileClass.vote_to_promote_profile (voter, profile);
 }

@@ -89,14 +89,18 @@ class GyftieClass {
       }
 
       void pause () {
-         require_auth (contract);
+         // require_auth (contract);
+         check (has_auth("gftma.x"_n) || has_auth(contract), "Permission denied.");
+
          AppState state = appstate_t.get_or_create (contract, AppState());
          state.paused = PAUSED;
          return appstate_t.set(state, contract);
       }
 
       void unpause () {
-         require_auth (contract);
+         // require_auth (contract);
+         check (has_auth("gftma.x"_n) || has_auth(contract), "Permission denied.");
+         
          AppState state = appstate_t.get_or_create (contract, AppState());
          state.paused = UNPAUSED;
          return appstate_t.set(state, contract);

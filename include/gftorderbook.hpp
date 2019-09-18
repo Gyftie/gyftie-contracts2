@@ -276,18 +276,18 @@ CONTRACT gftorderbook : public contract
     };
     typedef eosio::multi_index<"accounts"_n, account> accounts;
 
-    TABLE profile
-    {
-        name        account;
-        uint32_t    rating_sum;
-        uint16_t    rating_count;
-        string      idhash;
-        string      id_expiration;
-        asset       gft_balance;
-        asset       staked_balance;
-        uint64_t    primary_key() const { return account.value; }
-    };
-    typedef eosio::multi_index<"profiles"_n, profile> profile_table;
+    // TABLE profile
+    // {
+    //     name        account;
+    //     uint32_t    rating_sum;
+    //     uint16_t    rating_count;
+    //     string      idhash;
+    //     string      id_expiration;
+    //     asset       gft_balance;
+    //     asset       staked_balance;
+    //     uint64_t    primary_key() const { return account.value; }
+    // };
+    // typedef eosio::multi_index<"profiles"_n, profile> profile_table;
 
     struct key_weight
     {
@@ -773,7 +773,6 @@ CONTRACT gftorderbook : public contract
         sendfrombal (c.gyftiecontract, seller, buyer, xfer_to_buyer_gft, "Trade minus Taker Fees");
         sendfrombal (c.valid_counter_token_contract, buyer, seller, xfer_to_seller_eos, "Trade");
         sendfrombal (c.gyftiecontract, seller, seller, taker_fee_to_seller_gft, "Market Maker Reward");
-
         set_last_price (price);
 
         action(
@@ -792,9 +791,21 @@ CONTRACT gftorderbook : public contract
         config_table config (get_self(), get_self().value);
         auto c = config.get();
         
-        ProfileClass profileClass (c.gyftiecontract);
-        profileClass.selling_gft (seller, gft_amount);
-        profileClass.buying_gft (buyer, gft_amount);
+        action(
+            permission_level{get_self(), "owner"_n},
+            c.gyftiecontract, "buynotify"_n,
+            std::make_tuple(buyer, gft_amount))
+        .send();
+
+        action(
+            permission_level{get_self(), "owner"_n},
+            c.gyftiecontract, "sellnotify"_n,
+            std::make_tuple(seller, gft_amount))
+        .send();
+
+        // ProfileClass profileClass (c.gyftiecontract);
+        // profileClass.selling_gft (seller, gft_amount);
+        // profileClass.buying_gft (buyer, gft_amount);
         
         sendfrombal (c.gyftiecontract, seller, buyer, gft_amount, "Trade");
         sendfrombal (c.valid_counter_token_contract, buyer, seller, xfer_to_seller_eos, "Trade minus Taker Fees");
