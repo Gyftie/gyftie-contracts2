@@ -16,18 +16,18 @@ let member1, member2, member3, member4, member5, member6, member7, member8, memb
 let member11, member12, member13, member14, member15;
 
 async function assetToFloat(assetStr, precision) {
-    if (typeof precision === "undefined") {
-      precision = 4;
-    }
-    // console.log(typeof assetStr)
-    // console.log(assetStr)
-    return parseFloat(
-      Math.round(
-        parseFloat(assetStr.substring(0, assetStr.length - 4)) * 10 ** precision
-      ) /
-        10 ** precision
-    ).toFixed(precision);
+  if (typeof precision === "undefined") {
+    precision = 4;
   }
+  // console.log(typeof assetStr)
+  // console.log(assetStr)
+  return parseFloat(
+    Math.round(
+      parseFloat(assetStr.substring(0, assetStr.length - 4)) * 10 ** precision
+    ) /
+      10 ** precision
+  ).toFixed(precision);
+}
 
 async function getGftSupply () {
   const stat = await gyftieTokenContract.provider.eos.getTableRows({

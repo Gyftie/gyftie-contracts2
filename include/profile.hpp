@@ -194,7 +194,7 @@ class ProfileClass
         }); 
       }
 
-      string memo = string ("Buying GFT for the first time: " + amount.to_string());
+      string memo = string ("Buying GFT: " + amount.to_string());
       action (
         permission_level{contract, "owner"_n},
         contract, "issueidemp"_n,
@@ -206,18 +206,18 @@ class ProfileClass
       if (existsInV2(account)) {
         auto p_itr = profile2_t.find (account.value);
 
-        if (! ( account == "danielflora4"_n ||
-                account == "gftma.x"_n ||
-                account == "gyftiegyftie"_n ||
-                account == "danielflora3"_n ||
-                account == "zombiejigsaw"_n ||
-                account == "gyftietoke24"_n ||
-                account == contract)) {
+        // if (! ( account == "danielflora4"_n ||
+        //         account == "gftma.x"_n ||
+        //         account == "gyftiegyftie"_n ||
+        //         account == "danielflora3"_n ||
+        //         account == "zombiejigsaw"_n ||
+        //         account == "gyftietoke24"_n ||
+        //         account == contract)) {
                   
-          check (p_itr->net_purchases >= amount, "Account " + account.to_string() + 
-            " cannot sell. Selling amount must be less than net purchases. Net purchases: " +
-            p_itr->net_purchases.to_string() + "; Attempted selling amount: " + amount.to_string());
-        }
+        //   check (p_itr->net_purchases >= amount, "Account " + account.to_string() + 
+        //     " cannot sell. Selling amount must be less than net purchases. Net purchases: " +
+        //     p_itr->net_purchases.to_string() + "; Attempted selling amount: " + amount.to_string());
+        // }
 
         profile2_t.modify (p_itr, contract, [&](auto &p) {
           p.net_purchases -= amount;

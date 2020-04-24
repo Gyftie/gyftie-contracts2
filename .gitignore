@@ -11,3 +11,4 @@ gyftie_project-prefix
 .DS_Store
 tests/node_modules
 *.json
+keys.env

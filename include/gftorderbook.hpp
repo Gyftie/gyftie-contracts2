@@ -729,20 +729,20 @@ CONTRACT gftorderbook : public contract
 
     void permit_selling (name seller, asset sell_amount) {
 
-        config_table config (get_self(), get_self().value);
-        auto c = config.get();
-        if (seller == c.gyftiecontract || seller == "danielflora3"_n || 
-            seller == "gyftiegyftie"_n || seller == "gftma.x"_n ||
-            seller == "danielflora4"_n)  {
-            return;
-        }
+        // config_table config (get_self(), get_self().value);
+        // auto c = config.get();
+        // if (seller == c.gyftiecontract || seller == "danielflora3"_n || 
+        //     seller == "gyftiegyftie"_n || seller == "gftma.x"_n ||
+        //     seller == "danielflora4"_n)  {
+        //     return;
+        // }
 
-        Permit::permit (c.gyftiecontract, seller, name{0}, common::SELLGFT_ACTIVITY);
+        // Permit::permit (c.gyftiecontract, seller, name{0}, common::SELLGFT_ACTIVITY);
 
-        ProfileClass profileClass (c.gyftiecontract);
-        auto p_itr = profileClass.profile2_t.find (seller.value);
-        check (p_itr->net_purchases >= sell_amount, "Net purchases (" + p_itr->net_purchases.to_string() +
-            ") must be greater than the sell amount of " + sell_amount.to_string());
+        // ProfileClass profileClass (c.gyftiecontract);
+        // auto p_itr = profileClass.profile2_t.find (seller.value);
+        // check (p_itr->net_purchases >= sell_amount, "Net purchases (" + p_itr->net_purchases.to_string() +
+        //     ") must be greater than the sell amount of " + sell_amount.to_string());
     }
 
     void settle_seller_maker (name buyer, name seller, asset price, asset gft_amount)

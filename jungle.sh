@@ -12,6 +12,8 @@ usergyftie13
 usergyftie14
 usergyftie15
 
+gyf
+
 cleos -u https://jungle2.cryptolions.io set contract gyftietoke24 gyftie/gyftietoken
 cleos -u https://jungle2.cryptolions.io set contract gftorderboo4 gyftie/gftorderbook
 
@@ -57,8 +59,8 @@ cleos -u https://jungle2.cryptolions.io get table gyftietoke24 gyftietoke24 badg
 
 cleos -u https://jungle2.cryptolions.io set contract -sjd -x 186400 gyftietoke24 gyftie/gyftietoken > gyftietoken_deploy.json
 cleos -u https://jungle2.cryptolions.io push action gyftietoke24 proposetrx ./gyftietoken_deploy.json -p usergyftie11
-cleos -u https://jungle2.cryptolions.io push action gyftietoke24 votefor '["usergyftie11", 8]' -p usergyftie11
-cleos -u https://jungle2.cryptolions.io push action gyftietoke24 votefor '["usergyftie13", 8]' -p usergyftie13
+cleos -u https://jungle2.cryptolions.io push action gyftietoke24 votefor '["usergyftie11", 7]' -p usergyftie11
+cleos -u https://jungle2.cryptolions.io push action gyftietoke24 votefor '["usergyftie13", 7]' -p usergyftie13
 
  "proposer": "usergyftie11",
   "proposal_name": "upgrade",
@@ -101,7 +103,7 @@ cleos -u https://jungle2.cryptolions.io  push action gftorderboo4 addbucket '[40
 
 
 cleos -u https://jungle2.cryptolions.io push action eosio updateauth '{
-    "account": "gftorderboo4",
+    "account": "gyftietoke24",
     "permission": "active",
     "parent": "owner",
     "auth": {
@@ -115,7 +117,7 @@ cleos -u https://jungle2.cryptolions.io push action eosio updateauth '{
         "accounts": [
             {
                 "permission": {
-                    "actor": "gftorderboo4",
+                    "actor": "gyftietoke24",
                     "permission": "eosio.code"
                 },
                 "weight": 1
@@ -123,7 +125,7 @@ cleos -u https://jungle2.cryptolions.io push action eosio updateauth '{
         ],
         "waits": []
     }
-}' -p gftorderboo4@owner
+}' -p gyftietoke24@owner
 
 cleos -u https://jungle2.cryptolions.io push action eosio updateauth '{
     "account": "gftorderboo4",
